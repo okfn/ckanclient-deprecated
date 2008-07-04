@@ -3,7 +3,7 @@ import ckanclient
 class TestCkanClient(object):
 
     test_base_location = 'http://127.0.0.1:5000/api/rest'
-    test_api_key = '5f7a1710-67a2-4afa-97e7-0d1f3e9b52df'
+    test_api_key = 'fd295a93-3b0c-420b-9446-76a9a1e0bd93'
 
     def setUp(self):
         self.c = ckanclient.CkanClient(
@@ -78,7 +78,7 @@ class TestCkanClient(object):
             'name': pkg_name,
             'url': 'orig_url',
             'download_url': 'orig_download_url',
-            'tags': [],
+            'tags': ['russian'],
         }
         self.c.package_register_post(package)
         status = self.c.last_status
@@ -88,9 +88,14 @@ class TestCkanClient(object):
         status = self.c.last_status
         assert status == 200, status
         message = self.c.last_message
-        assert message['name'] == pkg_name
-        assert message['url'] == 'orig_url'
-        assert message['download_url'] == 'orig_download_url'
+        name = message['name']
+        assert name == pkg_name
+        url = message['url']
+        assert url == 'orig_url'
+        download_url = message['download_url']
+        assert download_url == 'orig_download_url'
+        tags = message['tags']
+        assert tags == ['russian']
 
     def test_package_entity_put(self):
         pkg_name = self.generate_pkg_name()
@@ -99,18 +104,19 @@ class TestCkanClient(object):
             'name': pkg_name,
             'url': 'orig_url',
             'download_url': 'orig_download_url',
-            'tags': [],
+            'tags': ['russian'],
         }
         self.c.package_register_post(package)
         status = self.c.last_status
         assert status == 200, status
         
         # Check update of existing package.
+        mytag = 'mytag' + pkg_name
         package = {
             'name': pkg_name,
             'url': 'new_url',
             'download_url': 'new_download_url',
-            'tags': [],
+            'tags': ['russian', 'tolstoy', mytag],
         }
         self.c.package_entity_put(package)
         status = self.c.last_status
@@ -120,9 +126,25 @@ class TestCkanClient(object):
         status = self.c.last_status
         assert status == 200, status
         message = self.c.last_message
-        assert message['name'] == pkg_name
-        assert message['url'] == 'new_url'
-        assert message['download_url'] == 'new_download_url'
+        name = message['name']
+        assert name == pkg_name
+        url = message['url']
+        assert url == 'new_url'
+        download_url = message['download_url']
+        assert download_url == 'new_download_url'
+        tags = message['tags']
+        assert tags == ['russian', 'tolstoy', mytag]
 
+    # Todo: Package entity delete.
+    def test_package_entity_delete(self):
+        pass
 
-    # package entity delete
+    def test_tag_register_get(self):
+        self.c.tag_register_get()
+        status = self.c.last_status
+        assert status == 200
+        body = self.c.last_body
+        assert 'russian' in body
+        assert type(self.c.last_message) == list
+        assert 'russian' in self.c.last_message
+

@@ -16,6 +16,11 @@ The simplest way to make CKAN requests is:
     package_list = ckan.last_message
     print package_list
 
+    # Get the tag list.
+    ckan.tag_register_get()
+    tag_list = ckan.last_message
+    print tag_list
+
     # Register details of a new package.
     package_entity = {
         'name': my_package_name,
@@ -120,6 +125,12 @@ class CkanClient(object):
         data = self.dumpstr(package_dict)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers)
+
+    def tag_register_get(self):
+        self.reset()
+        url = self.get_location('Tag Register')
+        self.open_url(url)
+        return self.last_message
 
     def dumpstr(self, data):
         return simplejson.dumps(data)
