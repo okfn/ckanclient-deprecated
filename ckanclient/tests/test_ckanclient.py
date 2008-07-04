@@ -1,5 +1,8 @@
 import ckanclient
 
+# Todo: Discovery of local api-key for the okfntest:okfntest test user.
+# Todo: Fix CKAN so that tags are created with the new package (register post).
+
 class TestCkanClient(object):
 
     test_base_location = 'http://127.0.0.1:5000/api/rest'

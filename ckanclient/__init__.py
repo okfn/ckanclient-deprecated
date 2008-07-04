@@ -21,13 +21,15 @@ The simplest way to make CKAN requests is:
     tag_list = ckan.last_message
     print tag_list
 
-    # Register details of a new package.
+    # Collect the package metadata.
     package_entity = {
         'name': my_package_name,
         'url': my_package_url,
         'download_url': my_package_download_url,
     }
-    ckan.package_entity_post(package_entity)
+    
+    # Register the package.
+    ckan.package_register_post(package_entity)
 
     # Get the details of a package.
     ckan.package_entity_get(package_name)
@@ -39,9 +41,6 @@ The simplest way to make CKAN requests is:
     package_entity = ckan.last_message
     package_entity['url'] = new_package_url
     ckan.package_entity_post(package_entity)
-
-
->>> myCkan = 
 
 '''
 
