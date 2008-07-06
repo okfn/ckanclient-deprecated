@@ -1,5 +1,5 @@
 __version__ = '0.1a'
-__description__ = 'CKAN client software.'
+__description__ = 'The CKAN client Python package.'
 __long_description__ = \
 ''' The CKAN client software may be used to make requests on the Comprehensive
 Knowledge Archive Network (CKAN) REST API.
@@ -26,6 +26,8 @@ The simplest way to make CKAN requests is:
         'name': my_package_name,
         'url': my_package_url,
         'download_url': my_package_download_url,
+        'tags': my_package_keywords,
+        'notes': my_package_long_description,
     }
     
     # Register the package.
@@ -40,13 +42,14 @@ The simplest way to make CKAN requests is:
     ckan.package_entity_get(package_name)
     package_entity = ckan.last_message
     package_entity['url'] = new_package_url
+    package_entity['notes'] = new_package_notes
     ckan.package_entity_post(package_entity)
 
 '''
 
 __license__ = 'MIT'
 
-import os, urllib2
+import os, urllib, urllib2
 import simplejson
 
 class CkanClient(object):
@@ -73,11 +76,19 @@ class CkanClient(object):
 
     def open_url(self, location, data=None, headers={}):
         try:
+            if data != None:
+                data = urllib.urlencode({data: 1}) 
             req = urllib2.Request(location, data, headers)
             self.url_response = urllib2.urlopen(req)
         except urllib2.HTTPError, inst:
+            print "ckanclient: Received HTTP error code from CKAN resource."
+            print "ckanclient: location: %s" % location
+            print "ckanclient: response code: %s" % inst.fp.code
+            print "ckanclient: request headers: %s" % headers
+            print "ckanclient: request data: %s" % data
             self.last_status = inst.fp.code
         else:
+            #print "ckanclient: OK opening CKAN resource: %s" % location
             self.last_status = self.url_response.code
             self.last_body = self.url_response.read()
             self.last_headers = self.url_response.headers

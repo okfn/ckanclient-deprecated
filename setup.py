@@ -15,6 +15,7 @@ setup(
     license=__license__,
     url='http://www.okfn.org/ckanclient/',
     description=__description__,
+    keywords='data packaging component tool client',
     long_description =__long_description__,
     install_requires=[
         'simplejson',
