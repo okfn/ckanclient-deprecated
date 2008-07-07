@@ -1,8 +1,10 @@
 __version__ = '0.1a'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
-''' The CKAN client software may be used to make requests on the Comprehensive
+'''The CKAN client software may be used to make requests on the Comprehensive
 Knowledge Archive Network (CKAN) REST API.
+
+## Synopsis ##
 
 The simplest way to make CKAN requests is:
 
@@ -73,6 +75,8 @@ class CkanClient(object):
         self.last_body = None
         self.last_headers = None
         self.last_message = None
+        self.last_http_error = None
+        self.last_url_error = None
 
     def open_url(self, location, data=None, headers={}):
         try:
@@ -81,12 +85,15 @@ class CkanClient(object):
             req = urllib2.Request(location, data, headers)
             self.url_response = urllib2.urlopen(req)
         except urllib2.HTTPError, inst:
-            print "ckanclient: Received HTTP error code from CKAN resource."
-            print "ckanclient: location: %s" % location
-            print "ckanclient: response code: %s" % inst.fp.code
-            print "ckanclient: request headers: %s" % headers
-            print "ckanclient: request data: %s" % data
+            #print "ckanclient: Received HTTP error code from CKAN resource."
+            #print "ckanclient: location: %s" % location
+            #print "ckanclient: response code: %s" % inst.fp.code
+            #print "ckanclient: request headers: %s" % headers
+            #print "ckanclient: request data: %s" % data
+            self.last_http_error = inst
             self.last_status = inst.fp.code
+        except urllib2.URLError, inst:
+            self.last_url_error = inst
         else:
             #print "ckanclient: OK opening CKAN resource: %s" % location
             self.last_status = self.url_response.code
