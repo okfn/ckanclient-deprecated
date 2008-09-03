@@ -1,4 +1,4 @@
-__version__ = '0.1a'
+__version__ = '0.1'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
 '''The CKAN client software may be used to make requests on the Comprehensive
