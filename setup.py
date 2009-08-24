@@ -13,7 +13,7 @@ setup(
     author='Appropriate Software Foundation, Open Knowledge Foundation',
     author_email='info@okfn.org',
     license=__license__,
-    url='http://www.okfn.org/ckanclient/',
+    url='http://www.okfn.org/ckan/',
     download_url='http://www.okfn.org/ckanclient/',
     description=__description__,
     keywords='data packaging component tool client',

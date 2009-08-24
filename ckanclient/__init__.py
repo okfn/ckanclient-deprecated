@@ -52,7 +52,8 @@ The simplest way to make CKAN requests is:
 __license__ = 'MIT'
 
 import os, urllib, urllib2
-import simplejson
+import logging
+logger = logging.getLogger('ckanclient')
 
 class CkanClient(object):
     
@@ -150,8 +151,10 @@ class CkanClient(object):
         return self.last_message
 
     def dumpstr(self, data):
+        import simplejson
         return simplejson.dumps(data)
     
     def loadstr(self, string):
+        import simplejson
         return simplejson.loads(string)
 
