@@ -151,10 +151,16 @@ class CkanClient(object):
         return self.last_message
 
     def dumpstr(self, data):
-        import simplejson
-        return simplejson.dumps(data)
+        try: # since python 2.6
+            import json
+        except ImportError: 
+            import simplejson as json
+        return json.dumps(data)
     
     def loadstr(self, string):
-        import simplejson
-        return simplejson.loads(string)
+        try: # since python 2.6
+            import json
+        except ImportError: 
+            import simplejson as json
+        return json.loads(string)
 

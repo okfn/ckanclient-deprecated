@@ -19,7 +19,8 @@ setup(
     keywords='data packaging component tool client',
     long_description =__long_description__,
     install_requires=[
-        'simplejson',
+        # only required if python <= 2.5 (as json library in python >= 2.6)
+        # 'simplejson',
     ],
     packages=find_packages(exclude=['ez_setup']),
     #scripts = ['bin/ckanclient-admin'],
