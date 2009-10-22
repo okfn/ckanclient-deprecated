@@ -6,6 +6,7 @@ import ckanclient
 class TestCkanClient(object):
 
     test_base_location = 'http://127.0.0.1:5000/api/rest'
+#    test_base_location = 'http://test.ckan.net/api/rest'
     test_api_key = '2b248939-df91-4a10-841e-c9da9757b571'
 
     def setUp(self):
@@ -82,11 +83,13 @@ class TestCkanClient(object):
             'name': pkg_name,
             'url': 'orig_url',
             'download_url': 'orig_download_url',
-            'tags': ['russian'],
+            'tags': ['russian', 'newtag'],
+            'extras': {'genre':'thriller', 'format':'ebook'},
         }
         self.c.package_register_post(package)
         status = self.c.last_status
         assert status == 200, status
+
         # Check package is registered.
         self.c.package_entity_get(pkg_name)
         status = self.c.last_status
@@ -99,7 +102,10 @@ class TestCkanClient(object):
         download_url = message['download_url']
         assert download_url == 'orig_download_url'
         tags = message['tags']
-        assert tags == ['russian']
+        assert tags == ['russian', 'newtag']
+        extras = message['extras']
+        assert extras == package['extras']
+        
 
     def test_package_entity_put(self):
         pkg_name = self.generate_pkg_name()
@@ -121,10 +127,12 @@ class TestCkanClient(object):
             'url': 'new_url',
             'download_url': 'new_download_url',
             'tags': ['russian', 'tolstoy', mytag],
+            'extras': {'genre':'thriller', 'format':'ebook'},
         }
         self.c.package_entity_put(package)
         status = self.c.last_status
         assert status == 200
+
         # Check package is updated.
         self.c.package_entity_get(pkg_name)
         status = self.c.last_status
@@ -138,6 +146,8 @@ class TestCkanClient(object):
         assert download_url == 'new_download_url'
         tags = message['tags']
         assert tags == ['russian', 'tolstoy', mytag], tags
+        extras = message['extras']
+        assert extras == package['extras']
 
     # Todo: Package entity delete.
     def test_package_entity_delete(self):
