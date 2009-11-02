@@ -14,13 +14,11 @@ The simplest way to make CKAN requests is:
     ckan = ckanclient.CkanClient(api_key=my_key)
     
     # Get the package list.
-    ckan.package_register_get()
-    package_list = ckan.last_message
+    package_list = ckan.package_register_get()
     print package_list
 
     # Get the tag list.
-    ckan.tag_register_get()
-    tag_list = ckan.last_message
+    tag_list = ckan.tag_register_get()
     print tag_list
 
     # Collect the package metadata.
@@ -45,8 +43,29 @@ The simplest way to make CKAN requests is:
     package_entity = ckan.last_message
     package_entity['url'] = new_package_url
     package_entity['notes'] = new_package_notes
-    ckan.package_entity_post(package_entity)
+    ckan.package_entity_put(package_entity)
 
+    # List groups
+    group_list = ckan.group_register_get()
+    print group_list
+    
+    # Create a new group
+    group_entity = {
+        'name': my_group_name,
+        'title': my_group_title,
+        'description': my_group_description,
+        'packages': group_package_names,
+        }
+    ckan.group_register_post(group_entity)
+
+    # Get the details of a group.
+    print ckan.group_entity_get(group_name)
+
+    # Update the group details
+    group_entity = ckan.last_message
+    group_entity['title'] = new_group_title
+    group_entity['packages'] = new_group_packages
+    ckan.group_entity_put(group_entity)
 '''
 
 __license__ = 'MIT'
@@ -57,13 +76,16 @@ logger = logging.getLogger('ckanclient')
 
 class CkanClient(object):
     
-    base_location = 'http://www.ckan.net/api/rest'
+    base_location = 'http://www.ckan.net/api'
     resource_paths = {
         'Base': '/',
-        'Package Register': '/package',
-        'Package Entity': '/package',
-        'Tag Register': '/tag',
-        'Tag Entity': '/tag',
+        'Package Register': '/rest/package',
+        'Package Entity': '/rest/package',
+        'Tag Register': '/rest/tag',
+        'Tag Entity': '/rest/tag',
+        'Group Register': '/rest/group',
+        'Group Entity': '/rest/group',
+        'Package Search': '/search/package',
     }
 
     def __init__(self, base_location=None, api_key=None):
@@ -101,7 +123,7 @@ class CkanClient(object):
             self.last_body = self.url_response.read()
             self.last_headers = self.url_response.headers
             try:
-                self.last_message = self.loadstr(self.last_body)
+                self.last_message = self.__loadstr(self.last_body)
             except ValueError:
                 pass
     
@@ -126,7 +148,7 @@ class CkanClient(object):
     def package_register_post(self, package_dict):
         self.reset()
         url = self.get_location('Package Register')
-        data = self.dumpstr(package_dict)
+        data = self.__dumpstr(package_dict)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers)
 
@@ -140,7 +162,7 @@ class CkanClient(object):
         self.reset()
         package_name = package_dict['name']
         url = self.get_location('Package Entity', package_name)
-        data = self.dumpstr(package_dict)
+        data = self.__dumpstr(package_dict)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers)
 
@@ -150,14 +172,56 @@ class CkanClient(object):
         self.open_url(url)
         return self.last_message
 
-    def dumpstr(self, data):
+    def tag_entity_get(self, tag_name):
+        self.reset()
+        url = self.get_location('Tag Entity', tag_name)
+        self.open_url(url)
+        return self.last_message
+
+    def group_register_post(self, group_dict):
+        self.reset()
+        url = self.get_location('Group Register')
+        data = self.__dumpstr(group_dict)
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, data, headers)
+
+    def group_register_get(self):
+        self.reset()
+        url = self.get_location('Group Register')
+        self.open_url(url)
+        return self.last_message
+
+    def group_entity_get(self, group_name):
+        self.reset()
+        url = self.get_location('Group Entity', group_name)
+        self.open_url(url)
+        return self.last_message
+
+    def group_entity_put(self, group_dict):
+        self.reset()
+        group_name = group_dict['name']
+        url = self.get_location('Group Entity', group_name)
+        data = self.__dumpstr(group_dict)
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, data, headers)
+
+    def package_search(self, q, search_options={}):
+        self.reset()
+        url = self.get_location('Package Search')
+        search_options['q'] = q
+        data = self.__dumpstr(search_options)
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, data, headers)
+        return self.last_message
+
+    def __dumpstr(self, data):
         try: # since python 2.6
             import json
         except ImportError: 
             import simplejson as json
         return json.dumps(data)
     
-    def loadstr(self, string):
+    def __loadstr(self, string):
         try: # since python 2.6
             import json
         except ImportError: 

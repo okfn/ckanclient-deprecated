@@ -5,9 +5,14 @@ import ckanclient
 
 class TestCkanClient(object):
 
-    test_base_location = 'http://127.0.0.1:5000/api/rest'
-#    test_base_location = 'http://test.ckan.net/api/rest'
-    test_api_key = '2b248939-df91-4a10-841e-c9da9757b571'
+    # Before running tests:
+
+    #  1. Run a test server in another shell
+    #  2. On the test server run:
+    #      $ paster db clean && paster db init && paster create-test-data
+    #  3. Login to the test server for the api-key and set these options:
+    test_base_location = 'http://127.0.0.1:5000/api'
+    test_api_key = '6a1940ee-1d1d-4532-9b84-4ec05b068c9d'
 
     def setUp(self):
         self.c = ckanclient.CkanClient(
@@ -15,19 +20,29 @@ class TestCkanClient(object):
             api_key=self.test_api_key,
         )
 
-    def test_get_locations(self):
+    def test_0_get_locations(self):
+        rest_base = self.test_base_location + '/rest'
+        search_base = self.test_base_location + '/search'
         url = self.c.get_location('Base')
-        assert url == self.test_base_location + '/'
+        assert url == self.test_base_location + '/', url
         url = self.c.get_location('Package Register')
-        assert url == self.test_base_location + '/package'
+        assert url == rest_base + '/package'
         url = self.c.get_location('Package Entity', 'myname')
-        assert url == self.test_base_location + '/package/myname'
+        assert url == rest_base + '/package/myname'
+        url = self.c.get_location('Group Register')
+        assert url == rest_base + '/group'
+        url = self.c.get_location('Group Entity', 'myname')
+        assert url == rest_base + '/group/myname'
         url = self.c.get_location('Tag Register')
-        assert url == self.test_base_location + '/tag'
+        assert url == rest_base + '/tag'
         url = self.c.get_location('Tag Entity', 'myname')
-        assert url == self.test_base_location + '/tag/myname'
+        assert url == rest_base + '/tag/myname'
+        url = self.c.get_location('Tag Entity', 'myname')
+        assert url == rest_base + '/tag/myname'
+        url = self.c.get_location('Package Search')
+        assert url == search_base + '/package'
 
-    def test_open_base_location(self):
+    def test_1_open_base_location(self):
         assert self.c.base_location == self.test_base_location
         self.c.open_base_location()
         status = self.c.last_status
@@ -38,7 +53,7 @@ class TestCkanClient(object):
         # header = self.c.last_headers.get('Connection')
         # assert header == 'close', self.c.last_headers
 
-    def test_package_register_get(self):
+    def test_1_package_register_get(self):
         self.c.package_register_get()
         status = self.c.last_status
         assert status == 200
@@ -47,7 +62,7 @@ class TestCkanClient(object):
         assert type(self.c.last_message) == list
         assert 'annakarenina' in self.c.last_message
 
-    def test_package_entity_get(self):
+    def test_1_package_entity_get(self):
         # Check registered entity is found.
         self.c.package_entity_get('annakarenina')
         status = self.c.last_status
@@ -65,15 +80,15 @@ class TestCkanClient(object):
         status = self.c.last_status
         assert status == 404, status
 
-    def generate_pkg_name(self):
+    def _generate_pkg_name(self):
         pkg_name = 'ckanclienttest'
         import time
         timestr = str(time.time()).replace('.', '')
         pkg_name += timestr
         return pkg_name
 
-    def test_package_register_post(self):
-        pkg_name = self.generate_pkg_name()
+    def test_2_package_register_post(self):
+        pkg_name = self._generate_pkg_name()
         # Check package isn't registered.
         self.c.package_entity_get(pkg_name)
         status = self.c.last_status
@@ -107,8 +122,8 @@ class TestCkanClient(object):
         assert extras == package['extras']
         
 
-    def test_package_entity_put(self):
-        pkg_name = self.generate_pkg_name()
+    def test_3_package_entity_put(self):
+        pkg_name = self._generate_pkg_name()
         # Register new package.
         package = {
             'name': pkg_name,
@@ -150,10 +165,10 @@ class TestCkanClient(object):
         assert extras == package['extras']
 
     # Todo: Package entity delete.
-    def test_package_entity_delete(self):
+    def test_4_package_entity_delete(self):
         pass
 
-    def test_tag_register_get(self):
+    def test_5_tag_register_get(self):
         self.c.tag_register_get()
         status = self.c.last_status
         assert status == 200
@@ -162,3 +177,9 @@ class TestCkanClient(object):
         assert type(self.c.last_message) == list
         assert 'russian' in self.c.last_message
 
+    def test_6_pkg_search_basic(self):
+        res = self.c.package_search('anna')
+        status = self.c.last_status
+        assert status == 200, status
+        assert res['count'] == 1, res
+        assert res['results'] == [u'annakarenina']
