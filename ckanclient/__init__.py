@@ -2,7 +2,8 @@ __version__ = '0.2'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
 '''The CKAN client software may be used to make requests on the Comprehensive
-Knowledge Archive Network (CKAN) REST API.
+Knowledge Archive Network (CKAN) API including its REST interface to all
+primary objects (packages, groups, tags) and its search interface.
 
 Synopsis
 ========
@@ -67,6 +68,24 @@ The simplest way to make CKAN requests is:
     group_entity['title'] = new_group_title
     group_entity['packages'] = new_group_packages
     ckan.group_entity_put(group_entity)
+
+Changelog
+=========
+
+v0.2 2009-11-05
+---------------
+
+  * Search API support added
+  * Improved package support to include additional fields such as 'extras'
+  * Support tag and group entities in addition to package
+  * Compatibility changes: CkanClient base_location (now should point to base
+    api e.g. http://ckan.net/api rather than http://ckan.net/api/rest)
+
+
+v0.1 2008-04
+------------
+
+  * Fully functional implementation for REST interface to packages
 '''
 
 __license__ = 'MIT'
