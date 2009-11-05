@@ -1,10 +1,11 @@
-__version__ = '0.1'
+__version__ = '0.2'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
 '''The CKAN client software may be used to make requests on the Comprehensive
 Knowledge Archive Network (CKAN) REST API.
 
-## Synopsis ##
+Synopsis
+========
 
 The simplest way to make CKAN requests is:
 
