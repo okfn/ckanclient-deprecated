@@ -127,6 +127,8 @@ class CkanClient(object):
                 data = urllib.urlencode({data: 1}) 
             req = urllib2.Request(location, data, headers)
             self.url_response = urllib2.urlopen(req)
+        except urllib2.URLError, inst:
+            self.last_url_error = inst
         except urllib2.HTTPError, inst:
             #print "ckanclient: Received HTTP error code from CKAN resource."
             #print "ckanclient: location: %s" % location
@@ -135,8 +137,6 @@ class CkanClient(object):
             #print "ckanclient: request data: %s" % data
             self.last_http_error = inst
             self.last_status = inst.fp.code
-        except urllib2.URLError, inst:
-            self.last_url_error = inst
         else:
             #print "ckanclient: OK opening CKAN resource: %s" % location
             self.last_status = self.url_response.code
