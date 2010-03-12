@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+from ckanclient.loaders.base import SimpleGoogleSpreadsheetLoader 
+
+class AidProjectsLoader(SimpleGoogleSpreadsheetLoader):
+    """
+    Obtains packages from Aid Projects spreadsheet and puts them on CKAN.
+    """
+    HEADING_ROW_POSN = 1
+    FIRST_ENTITY_ROW_POSN = 4
+
+    def entity_to_package(self, entity):
+        """Makes a CKAN package from an Aid Projects spreadsheet entity."""
+        return self.create_package(
+            name=entity['unique_id'],
+            title=entity['title'],
+            url=entity['website_1'],
+            maintainer='OKFN',
+            maintainer_email='info@okfn.org',
+            author='OKFN',
+            author_email='info@okfn.org',
+            notes=entity['overview'] + "\n\n## Details\n" + entity['details'],
+            tags=["aidinfo"],
+            extras=entity,
+        #    license_id='other-open',
+        )
+
+if __name__ == '__main__':
+    AidProjectsLoader().run()
+
+README = """
+AidInfo CKAN Package Loader.
+
+This program remotely registers and updates CKAN packages that have been
+recorded in a Google Spreadsheet. Instructions for users are below.
+
+1 . Install software and software dependencies.
+
+        $ easy_install gdata
+        $ easy_install ckanclient
+        
+
+
+2.  Run with appropriate options (Google account, Google spreadsheet, CKAN service, and CKAN API key).
+
+        $ python aidinfo.py --help
+        $ python aidinfo.py [OPTIONS]
+
+
+3. Report issues and contribute feedback.
+
+    Private feedback:
+ 
+        john.bywater@appropriatesoftware.net
+        info@okfn.org
+
+    Public mailing list:
+
+        ckan-discuss@lists.okfn.org
+
+"""
+
