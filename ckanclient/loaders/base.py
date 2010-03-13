@@ -14,9 +14,15 @@ class GoogleSpreadsheetReader(object):
         """Init the Google Spreadsheets service client."""
         self.options = options
         self.service = GoogleSpreadsheetsService()
+        if not self.options.google_email:
+            print "Warning: Google account email not provided."
+        if not self.options.google_password:
+            print "Warning: Google account password not provided."
         self.service.email = self.options.google_email
         self.service.password = self.options.google_password
         self.service.ProgrammaticLogin()
+        if not self.options.google_spreadsheet_key:
+            print "Warning: Google spreadsheet key not provided."
 
     def get_cells(self, sheet_index=0):
         """Returns a dict of cell data keyed by cell coordinate (row, col)."""
@@ -48,7 +54,7 @@ class CkanLoader(object):
     Directs a CKAN service client to put obtained packages on CKAN.
     """
     
-    usage  = '''usage: %prog [path]'''
+    usage  = '''usage: %prog OPTIONS'''
 
     def __init__(self):
         """Sets up options and init the CKAN service client."""
