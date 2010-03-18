@@ -10,9 +10,9 @@ class TestCkanClient(object):
     #  1. Run a test server in another shell
     #  2. On the test server run:
     #      $ paster db clean && paster db init && paster create-test-data
-    #  3. Login to the test server for the api-key and set these options:
     test_base_location = 'http://127.0.0.1:5000/api'
-    test_api_key = '6a1940ee-1d1d-4532-9b84-4ec05b068c9d'
+    # this is api key created for tester user by create-test-data in ckan
+    test_api_key = 'tester'
 
     def setUp(self):
         self.c = ckanclient.CkanClient(
@@ -20,7 +20,7 @@ class TestCkanClient(object):
             api_key=self.test_api_key,
         )
 
-    def test_0_get_locations(self):
+    def test_01_get_locations(self):
         rest_base = self.test_base_location + '/rest'
         search_base = self.test_base_location + '/search'
         url = self.c.get_location('Base')
@@ -42,18 +42,18 @@ class TestCkanClient(object):
         url = self.c.get_location('Package Search')
         assert url == search_base + '/package'
 
-    def test_1_open_base_location(self):
+    def test_02_open_base_location(self):
         assert self.c.base_location == self.test_base_location
         self.c.open_base_location()
         status = self.c.last_status
         assert status == 200
         body = self.c.last_body
-        assert 'REST Resources and Locations' in body
+        assert '<h2>API</h2>' in body, body
         # Not sure why this doesn't work anymore
         # header = self.c.last_headers.get('Connection')
         # assert header == 'close', self.c.last_headers
 
-    def test_1_package_register_get(self):
+    def test_03_package_register_get(self):
         self.c.package_register_get()
         status = self.c.last_status
         assert status == 200
@@ -62,7 +62,7 @@ class TestCkanClient(object):
         assert type(self.c.last_message) == list
         assert 'annakarenina' in self.c.last_message
 
-    def test_1_package_entity_get(self):
+    def test_04_package_entity_get(self):
         # Check registered entity is found.
         self.c.package_entity_get('annakarenina')
         status = self.c.last_status
@@ -75,6 +75,7 @@ class TestCkanClient(object):
         assert message['name'] == u'annakarenina'
         assert message['title'] == u'A Novel By Tolstoy'
 
+    def test_05_package_entity_get_404(self):
         # Check unregistered entity is not found.
         self.c.package_entity_get('mycoffeecup')
         status = self.c.last_status
@@ -117,7 +118,8 @@ class TestCkanClient(object):
         download_url = message['download_url']
         assert download_url == 'orig_download_url'
         tags = message['tags']
-        assert tags == ['russian', 'newtag']
+        # order out is not guaranteed
+        assert set(tags) == set(['newtag', 'russian']), tags
         extras = message['extras']
         assert extras == package['extras']
         
@@ -160,7 +162,8 @@ class TestCkanClient(object):
         download_url = message['download_url']
         assert download_url == 'new_download_url'
         tags = message['tags']
-        assert tags == ['russian', 'tolstoy', mytag], tags
+        # order out is not guaranteed
+        assert set(tags) == set(['russian', 'tolstoy', mytag]), tags
         extras = message['extras']
         assert extras == package['extras']
 
@@ -178,8 +181,9 @@ class TestCkanClient(object):
         assert 'russian' in self.c.last_message
 
     def test_6_pkg_search_basic(self):
-        res = self.c.package_search('anna')
+        res = self.c.package_search('annakarenina')
         status = self.c.last_status
         assert status == 200, status
         assert res['count'] == 1, res
         assert res['results'] == [u'annakarenina']
+

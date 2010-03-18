@@ -122,13 +122,12 @@ class CkanClient(object):
         self.last_url_error = None
 
     def open_url(self, location, data=None, headers={}):
+        print 'Opening %s' % location
         try:
             if data != None:
                 data = urllib.urlencode({data: 1}) 
             req = urllib2.Request(location, data, headers)
             self.url_response = urllib2.urlopen(req)
-        except urllib2.URLError, inst:
-            self.last_url_error = inst
         except urllib2.HTTPError, inst:
             #print "ckanclient: Received HTTP error code from CKAN resource."
             #print "ckanclient: location: %s" % location
@@ -136,7 +135,11 @@ class CkanClient(object):
             #print "ckanclient: request headers: %s" % headers
             #print "ckanclient: request data: %s" % data
             self.last_http_error = inst
-            self.last_status = inst.fp.code
+            self.last_status = inst.code
+            self.last_message = inst.read()
+        except urllib2.URLError, inst:
+            self.last_url_error = inst
+            self.last_status,self.last_message = inst.reason
         else:
             #print "ckanclient: OK opening CKAN resource: %s" % location
             self.last_status = self.url_response.code

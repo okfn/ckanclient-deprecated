@@ -30,6 +30,7 @@ setup(
     packages=find_packages(exclude=['ez_setup']),
     scripts=scripts,
     include_package_data=True,
+    always_unzip=True,
     classifiers = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
