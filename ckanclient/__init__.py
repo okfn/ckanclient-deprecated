@@ -122,7 +122,6 @@ class CkanClient(object):
         self.last_url_error = None
 
     def open_url(self, location, data=None, headers={}):
-        print 'Opening %s' % location
         try:
             if data != None:
                 data = urllib.urlencode({data: 1}) 
