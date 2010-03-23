@@ -72,6 +72,12 @@ The simplest way to make CKAN requests is:
 Changelog
 =========
 
+v0.3 (so far) 
+-------------
+
+  * Package Relationships added
+  * Package deletion fixed
+
 v0.2 2009-11-05
 ---------------
 
@@ -121,11 +127,11 @@ class CkanClient(object):
         self.last_http_error = None
         self.last_url_error = None
 
-    def open_url(self, location, data=None, headers={}):
+    def open_url(self, location, data=None, headers={}, method=None):
         try:
             if data != None:
                 data = urllib.urlencode({data: 1}) 
-            req = urllib2.Request(location, data, headers)
+            req = Request(location, data, headers, method=method)
             self.url_response = urllib2.urlopen(req)
         except urllib2.HTTPError, inst:
             #print "ckanclient: Received HTTP error code from CKAN resource."
@@ -149,11 +155,15 @@ class CkanClient(object):
             except ValueError:
                 pass
     
-    def get_location(self, resource_name, entity_id=None):
+    def get_location(self, resource_name, entity_id=None, subregister=None, entity2_id=None):
         base = self.base_location
         path = self.resource_paths[resource_name]
         if entity_id != None:
             path += '/' + entity_id
+            if subregister != None:
+                path += '/' + subregister
+                if entity2_id != None:
+                    path += '/' + entity2_id            
         return base + path
 
     def open_base_location(self):
@@ -186,7 +196,58 @@ class CkanClient(object):
         url = self.get_location('Package Entity', package_name)
         data = self.__dumpstr(package_dict)
         headers = {'Authorization': self.api_key}
-        self.open_url(url, data, headers)
+        self.open_url(url, data, headers, method='PUT')
+
+    def package_entity_delete(self, package_name):
+        self.reset()
+        url = self.get_location('Package Register', package_name)
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, headers=headers, method='DELETE')
+
+    def package_relationship_register_get(self, package_name, relationship_type='relationships', relationship_with_package_name=None):
+        self.reset()
+        url = self.get_location('Package Entity', entity_id=package_name, subregister=relationship_type, entity2_id=relationship_with_package_name)
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, headers=headers)
+        return self.last_message
+
+    def package_relationship_entity_post(self, subject_package_name,
+                                          relationship_type,
+                                          object_package_name,
+                                          comment=u''):
+        self.reset()
+        url = self.get_location('Package Entity',
+                                entity_id=subject_package_name,
+                                subregister=relationship_type,
+                                entity2_id=object_package_name)
+        data = self.__dumpstr({'comment':comment})
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, data, headers, method='POST')
+
+    def package_relationship_entity_put(self, subject_package_name,
+                                        relationship_type,
+                                        object_package_name,
+                                        comment=u''):
+        self.reset()
+        url = self.get_location('Package Entity',
+                                entity_id=subject_package_name,
+                                subregister=relationship_type,
+                                entity2_id=object_package_name)
+        data = self.__dumpstr({'comment':comment})
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, data, headers, method='PUT')
+
+    def package_relationship_entity_delete(self, subject_package_name,
+                                           relationship_type,
+                                           object_package_name):
+        self.reset()
+        url = self.get_location('Package Entity',
+                                entity_id=subject_package_name,
+                                subregister=relationship_type,
+                                entity2_id=object_package_name)
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, headers=headers, method='DELETE')
+        return self.last_message
 
     def tag_register_get(self):
         self.reset()
@@ -225,7 +286,7 @@ class CkanClient(object):
         url = self.get_location('Group Entity', group_name)
         data = self.__dumpstr(group_dict)
         headers = {'Authorization': self.api_key}
-        self.open_url(url, data, headers)
+        self.open_url(url, data, headers, method='PUT')
 
     def package_search(self, q, search_options={}):
         self.reset()
@@ -250,3 +311,21 @@ class CkanClient(object):
             import simplejson as json
         return json.loads(string)
 
+class Request(urllib2.Request):
+    def __init__(self, url, data=None, headers={}, method=None):
+        urllib2.Request.__init__(self, url, data, headers)
+        self._method = method
+        
+    def get_method(self):
+        if self.has_data():
+            if not self._method:
+                return 'POST'
+            assert self._method in ('POST', 'PUT'), 'Invalid method "%s" for request with data.' % self._method
+            return self._method
+        else:
+            if not self._method:
+                return 'GET'
+            assert self._method in ('GET', 'DELETE'), 'Invalid method "%s" for request without data.' % self._method
+            return self._method
+            
+                
