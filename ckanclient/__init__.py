@@ -114,10 +114,18 @@ class CkanClient(object):
         'Package Search': '/search/package',
     }
 
-    def __init__(self, base_location=None, api_key=None):
+    def __init__(self, base_location=None, api_key=None,
+                 http_user=None, http_pass=None):
         if base_location is not None:
             self.base_location = base_location
         self.api_key = api_key
+        if http_user and http_pass:
+            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_mgr.add_password(None, base_location,
+                                      http_user, http_pass)
+            handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+            opener = urllib2.build_opener(handler)
+            urllib2.install_opener(opener)
 
     def reset(self):
         self.last_status = None
