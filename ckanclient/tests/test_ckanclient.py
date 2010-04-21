@@ -1,4 +1,4 @@
-import ckanclient
+from ckanclient import CkanClient
 
 # Todo: Discovery of local api-key for the okfntest:okfntest test user.
 
@@ -16,16 +16,15 @@ class TestCkanClient(object):
     #  3. Run these tests with nose:
     #      $ nosetests ckanclient/tests
 
-    @classmethod
-    def setup_class(self):
-        self.c = ckanclient.CkanClient(
+    def setup(self):
+        self.c = CkanClient(
             base_location=self.test_base_location,
             api_key=self.test_api_key,
+            is_verbose=True,
         )
         self.pkg_name_test_07 = self._generate_pkg_name()
 
-    @classmethod
-    def teardown_class(self):
+    def teardown(self):
         # delete relationships
         res = self.c.package_relationship_register_get('annakarenina')
         if self.c.last_status == 200:
@@ -195,6 +194,7 @@ class TestCkanClient(object):
 
     def test_08_package_entity_delete(self):
         # follows on from test_07
+        self.test_07_package_entity_put()
         assert self.pkg_name_test_07
         # check it is still there
         self.c.package_entity_get(self.pkg_name_test_07)
@@ -223,7 +223,6 @@ class TestCkanClient(object):
         assert res['results'] == [u'annakarenina']
 
     def test_11_package_relationship_post(self):
-        # check no existing relationships
         res = self.c.package_relationship_register_get('annakarenina')
         assert self.c.last_status == 200, self.c.last_status
         assert not self.c.last_message, self.c.last_body
@@ -233,7 +232,9 @@ class TestCkanClient(object):
         assert self.c.last_status == 200, self.c.last_status
         
     def test_12_package_relationship_get(self):
+        # check no existing relationships
         # follows on from test_11
+        self.test_11_package_relationship_post()
         # read relationship
         res = self.c.package_relationship_register_get('annakarenina')
         assert self.c.last_status == 200, self.c.last_status
@@ -246,6 +247,7 @@ class TestCkanClient(object):
 
     def test_13_package_relationship_put(self):
         # follows on from test_12
+        self.test_12_package_relationship_get()
         # update relationship
         res = self.c.package_relationship_entity_put('annakarenina', 'child_of', 'warandpeace', 'new comment')
         assert self.c.last_status == 200, self.c.last_status
