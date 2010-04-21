@@ -74,6 +74,16 @@ class CkanLoader(object):
             '--ckan-api-key',
             dest='ckan_api_key',
             help="""A valid CKAN REST API key.""")
+        parser.add_option(
+            '--no-create-confirmation',
+            dest='no_create_confimation',
+            action='store_true',
+            help="""Don't prompt for confirmation when registering a new package.""")
+        parser.add_option(
+            '--no-update-confirmation',
+            dest='no_update_confimation',
+            action='store_true',
+            help="""Don't prompt for confirmation when updating a registered package.""")
 
     def init_ckanclient(self):
         """Init the CKAN client from options."""
@@ -114,12 +124,13 @@ class CkanLoader(object):
                 print ""
                 pprint.pprint(package)
                 print ""
-                answer = raw_input("Do you want to update this package with CKAN now? [y/N] ")
-                if not answer or answer.lower()[0] != 'y':
-                    print "Skipping '%s' package..." % package['name']
-                    print ""
-                    sleep(1)
-                    continue
+                if not self.options.no_update_confimation:
+                    answer = raw_input("Do you want to update this package with CKAN now? [y/N] ")
+                    if not answer or answer.lower()[0] != 'y':
+                        print "Skipping '%s' package..." % package['name']
+                        print ""
+                        sleep(1)
+                        continue
                 print "Updating package..."
                 self.ckanclient.package_entity_put(package)
                 if self.ckanclient.last_status == 200:
@@ -149,12 +160,13 @@ class CkanLoader(object):
                 print ""
                 pprint.pprint(package)
                 print ""
-                answer = raw_input("Do you want to register this package with CKAN now? [y/N] ")
-                if not answer or answer.lower()[0] != 'y':
-                    print "Skipping '%s' package..." % package['name']
-                    print ""
-                    sleep(1)
-                    continue
+                if not self.options.no_create_confimation:
+                    answer = raw_input("Do you want to register this package with CKAN now? [y/N] ")
+                    if not answer or answer.lower()[0] != 'y':
+                        print "Skipping '%s' package..." % package['name']
+                        print ""
+                        sleep(1)
+                        continue
                 print "Registering package..."
                 self.ckanclient.package_register_post(package)
                 if self.ckanclient.last_status == 200:
@@ -195,7 +207,7 @@ class CkanLoader(object):
 
     def create_package(self, name, title='', url='', maintainer='', 
             maintainer_email='', author='', author_email='', notes='', 
-            tags=[], extras={}, license_id=''):
+            tags=[], extras={}, license_id=None, license=None, resources=[]):
         """Returns a CKAN REST API package from method arguments."""
         if not isinstance(tags, list):
             raise Exception, "Package tags must be a list: %s" % tags
@@ -211,7 +223,12 @@ class CkanLoader(object):
         package['author_email'] = author_email
         package['tags'] = tags
         package['extras'] = extras
-        package['license_id'] = license_id
+        # Pre and post licenses servicization.
+        if license_id != None:
+            package['license_id'] = license_id
+        elif license != None:
+            package['license'] = license
+        package['resources'] = resources
         return package
 
     def coerce_package_name(self, name):
@@ -366,6 +383,7 @@ class SimpleGoogleSpreadsheetLoader(AbstractGoogleSpreadsheetLoader):
         print "There are %s entities: %s" % (len(self.entities), ", ".join([self.coerce_package_name(e[self.headings[0]]) for e in self.entities]))
         # Construct packages.
         for entity in self.entities:
+            entity.pop('')
             package = self.entity_to_package(entity)
             if package:
                 self.packages.append(package)
@@ -390,4 +408,12 @@ class SimpleGoogleSpreadsheetLoader(AbstractGoogleSpreadsheetLoader):
         else:
             package = None
         return package
+
+    def create_package_resource(self, url='', format='', hash='', description=''):
+        return {
+            'url': url,
+            'format': format,
+            'hash': hash,
+            'description': description,
+        }
 
