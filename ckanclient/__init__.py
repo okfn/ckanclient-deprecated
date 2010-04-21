@@ -105,6 +105,8 @@ class CkanClient(object):
     base_location = 'http://www.ckan.net/api'
     resource_paths = {
         'Base': '/',
+        'Changeset Register': '/rest/changeset',
+        'Changeset Entity': '/rest/changeset',
         'Package Register': '/rest/package',
         'Package Entity': '/rest/package',
         'Tag Register': '/rest/tag',
@@ -114,11 +116,12 @@ class CkanClient(object):
         'Package Search': '/search/package',
     }
 
-    def __init__(self, base_location=None, api_key=None,
+    def __init__(self, base_location=None, api_key=None, is_verbose=False,
                  http_user=None, http_pass=None):
         if base_location is not None:
             self.base_location = base_location
         self.api_key = api_key
+        self.is_verbose = is_verbose
         if http_user and http_pass:
             password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
             password_mgr.add_password(None, base_location,
@@ -128,6 +131,7 @@ class CkanClient(object):
             urllib2.install_opener(opener)
 
     def reset(self):
+        self.last_location = None
         self.last_status = None
         self.last_body = None
         self.last_headers = None
@@ -136,25 +140,37 @@ class CkanClient(object):
         self.last_url_error = None
 
     def open_url(self, location, data=None, headers={}, method=None):
+        if self.is_verbose:
+            print "ckanclient: Opening %s" % location
+        self.last_location = location
         try:
             if data != None:
-                data = urllib.urlencode({data: 1}) 
+                data = urllib.urlencode({data: 1})
             req = Request(location, data, headers, method=method)
             self.url_response = urllib2.urlopen(req)
         except urllib2.HTTPError, inst:
-            #print "ckanclient: Received HTTP error code from CKAN resource."
-            #print "ckanclient: location: %s" % location
-            #print "ckanclient: response code: %s" % inst.fp.code
-            #print "ckanclient: request headers: %s" % headers
-            #print "ckanclient: request data: %s" % data
+            if self.is_verbose:
+                print "ckanclient: Received HTTP error code from CKAN resource."
+                print "ckanclient: location: %s" % location
+                print "ckanclient: response code: %s" % inst.fp.code
+                print "ckanclient: request headers: %s" % headers
+                print "ckanclient: request data: %s" % data
+                print "ckanclient: error: %s" % inst
             self.last_http_error = inst
             self.last_status = inst.code
             self.last_message = inst.read()
         except urllib2.URLError, inst:
+            if self.is_verbose:
+                print "ckanclient: Unable to progress with URL."
+                print "ckanclient: location: %s" % location
+                print "ckanclient: request headers: %s" % headers
+                print "ckanclient: request data: %s" % data
+                print "ckanclient: error: %s" % inst
             self.last_url_error = inst
             self.last_status,self.last_message = inst.reason
         else:
-            #print "ckanclient: OK opening CKAN resource: %s" % location
+            if self.is_verbose:
+                print "ckanclient: OK opening CKAN resource: %s" % location
             self.last_status = self.url_response.code
             self.last_body = self.url_response.read()
             self.last_headers = self.url_response.headers
@@ -178,6 +194,18 @@ class CkanClient(object):
         self.reset()
         url = self.get_location('Base')
         self.open_url(self.base_location)
+
+    def changeset_register_get(self):
+        self.reset()
+        url = self.get_location('Changeset Register')
+        self.open_url(url)
+        return self.last_message
+
+    def changeset_entity_get(self, changeset_name):
+        self.reset()
+        url = self.get_location('Changeset Entity', changeset_name)
+        self.open_url(url)
+        return self.last_message
 
     def package_register_get(self):
         self.reset()
@@ -212,47 +240,47 @@ class CkanClient(object):
         headers = {'Authorization': self.api_key}
         self.open_url(url, headers=headers, method='DELETE')
 
-    def package_relationship_register_get(self, package_name, relationship_type='relationships', relationship_with_package_name=None):
+    def package_relationship_register_get(self, package_name,
+                relationship_type='relationships', 
+                relationship_with_package_name=None):
         self.reset()
-        url = self.get_location('Package Entity', entity_id=package_name, subregister=relationship_type, entity2_id=relationship_with_package_name)
+        url = self.get_location('Package Entity',
+           entity_id=package_name,
+           subregister=relationship_type,
+           entity2_id=relationship_with_package_name)
         headers = {'Authorization': self.api_key}
         self.open_url(url, headers=headers)
         return self.last_message
 
     def package_relationship_entity_post(self, subject_package_name,
-                                          relationship_type,
-                                          object_package_name,
-                                          comment=u''):
+                relationship_type, object_package_name, comment=u''):
         self.reset()
         url = self.get_location('Package Entity',
-                                entity_id=subject_package_name,
-                                subregister=relationship_type,
-                                entity2_id=object_package_name)
+            entity_id=subject_package_name,
+            subregister=relationship_type,
+            entity2_id=object_package_name)
         data = self.__dumpstr({'comment':comment})
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers, method='POST')
 
     def package_relationship_entity_put(self, subject_package_name,
-                                        relationship_type,
-                                        object_package_name,
-                                        comment=u''):
+                relationship_type, object_package_name, comment=u''):
         self.reset()
         url = self.get_location('Package Entity',
-                                entity_id=subject_package_name,
-                                subregister=relationship_type,
-                                entity2_id=object_package_name)
+            entity_id=subject_package_name,
+            subregister=relationship_type,
+            entity2_id=object_package_name)
         data = self.__dumpstr({'comment':comment})
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers, method='PUT')
 
     def package_relationship_entity_delete(self, subject_package_name,
-                                           relationship_type,
-                                           object_package_name):
+                relationship_type, object_package_name):
         self.reset()
         url = self.get_location('Package Entity',
-                                entity_id=subject_package_name,
-                                subregister=relationship_type,
-                                entity2_id=object_package_name)
+            entity_id=subject_package_name,
+            subregister=relationship_type,
+            entity2_id=object_package_name)
         headers = {'Authorization': self.api_key}
         self.open_url(url, headers=headers, method='DELETE')
         return self.last_message
@@ -308,16 +336,17 @@ class CkanClient(object):
     def __dumpstr(self, data):
         try: # since python 2.6
             import json
-        except ImportError: 
+        except ImportError:
             import simplejson as json
         return json.dumps(data)
     
     def __loadstr(self, string):
         try: # since python 2.6
             import json
-        except ImportError: 
+        except ImportError:
             import simplejson as json
         return json.loads(string)
+
 
 class Request(urllib2.Request):
     def __init__(self, url, data=None, headers={}, method=None):
@@ -337,3 +366,4 @@ class Request(urllib2.Request):
             return self._method
             
                 
+
