@@ -75,6 +75,7 @@ Changelog
 v0.3 (so far) 
 -------------
 
+  * General usability improvements especially around error messages. 
   * Package Relationships added
   * Package deletion fixed
 
