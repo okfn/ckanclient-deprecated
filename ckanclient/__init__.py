@@ -69,8 +69,15 @@ The simplest way to make CKAN requests is:
     group_entity['packages'] = new_group_packages
     ckan.group_entity_put(group_entity)
 
+
 Changelog
 =========
+
+v0.3 2010-04-28
+---------------
+
+  * General usability improvements especially around error messages. 
+
 
 v0.2 2009-11-05
 ---------------
