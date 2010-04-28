@@ -72,12 +72,14 @@ The simplest way to make CKAN requests is:
 Changelog
 =========
 
-v0.3 (so far) 
--------------
+v0.3 2010-04-28
+---------------
 
   * General usability improvements especially around error messages. 
   * Package Relationships added
   * Package deletion fixed
+  * Changeset entities added
+  * Improved httpauth (thanks to will waites)
 
 v0.2 2009-11-05
 ---------------
