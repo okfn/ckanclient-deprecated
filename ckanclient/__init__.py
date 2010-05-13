@@ -104,7 +104,6 @@ import logging
 logger = logging.getLogger('ckanclient')
 
 class CkanClient(object):
-    
     base_location = 'http://www.ckan.net/api'
     resource_paths = {
         'Base': '/',
@@ -132,6 +131,12 @@ class CkanClient(object):
             handler = urllib2.HTTPBasicAuthHandler(password_mgr)
             opener = urllib2.build_opener(handler)
             urllib2.install_opener(opener)
+    
+    def _print(self, msg):
+        '''Print depending on self.is_verbose and log at the same time.'''
+        logger.debug(msg)
+        if self.is_verbose:
+            print(msg)
 
     def reset(self):
         self.last_location = None
@@ -144,7 +149,7 @@ class CkanClient(object):
 
     def open_url(self, location, data=None, headers={}, method=None):
         if self.is_verbose:
-            print "ckanclient: Opening %s" % location
+            self._print("ckanclient: Opening %s" % location)
         self.last_location = location
         try:
             if data != None:
@@ -152,33 +157,34 @@ class CkanClient(object):
             req = Request(location, data, headers, method=method)
             self.url_response = urllib2.urlopen(req)
         except urllib2.HTTPError, inst:
-            if self.is_verbose:
-                print "ckanclient: Received HTTP error code from CKAN resource."
-                print "ckanclient: location: %s" % location
-                print "ckanclient: response code: %s" % inst.fp.code
-                print "ckanclient: request headers: %s" % headers
-                print "ckanclient: request data: %s" % data
-                print "ckanclient: error: %s" % inst
+            self._print("ckanclient: Received HTTP error code from CKAN resource.")
+            self._print("ckanclient: location: %s" % location)
+            self._print("ckanclient: response code: %s" % inst.fp.code)
+            self._print("ckanclient: request headers: %s" % headers)
+            self._print("ckanclient: request data: %s" % data)
+            self._print("ckanclient: error: %s" % inst)
             self.last_http_error = inst
             self.last_status = inst.code
             self.last_message = inst.read()
         except urllib2.URLError, inst:
-            if self.is_verbose:
-                print "ckanclient: Unable to progress with URL."
-                print "ckanclient: location: %s" % location
-                print "ckanclient: request headers: %s" % headers
-                print "ckanclient: request data: %s" % data
-                print "ckanclient: error: %s" % inst
+            self._print("ckanclient: Unable to progress with URL.")
+            self._print("ckanclient: location: %s" % location)
+            self._print("ckanclient: request headers: %s" % headers)
+            self._print("ckanclient: request data: %s" % data)
+            self._print("ckanclient: error: %s" % inst)
             self.last_url_error = inst
             self.last_status,self.last_message = inst.reason
         else:
-            if self.is_verbose:
-                print "ckanclient: OK opening CKAN resource: %s" % location
+            self._print("ckanclient: OK opening CKAN resource: %s" % location)
             self.last_status = self.url_response.code
+            self._print('ckanclient: last status %s' % self.last_status)
             self.last_body = self.url_response.read()
+            self._print('ckanclient: last body %s' % self.last_body)
             self.last_headers = self.url_response.headers
+            self._print('ckanclient: last headers %s' % self.last_headers)
             try:
                 self.last_message = self.__loadstr(self.last_body)
+                self._print('ckanclient: last message %s' % self.last_message)
             except ValueError:
                 pass
     
