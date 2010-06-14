@@ -286,6 +286,14 @@ class CkanLoader(object):
                 r += str(i)
         return r
 
+    def create_package_resource(self, url='', format='', hash='', description=''):
+        return {
+            'url': url,
+            'format': format,
+            'hash': hash,
+            'description': description,
+        }
+
 
 class AbstractGoogleSpreadsheetLoader(CkanLoader):
     """
@@ -409,11 +417,4 @@ class SimpleGoogleSpreadsheetLoader(AbstractGoogleSpreadsheetLoader):
             package = None
         return package
 
-    def create_package_resource(self, url='', format='', hash='', description=''):
-        return {
-            'url': url,
-            'format': format,
-            'hash': hash,
-            'description': description,
-        }
 
