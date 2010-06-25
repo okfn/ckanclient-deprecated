@@ -103,40 +103,25 @@ import os, urllib, urllib2
 import logging
 logger = logging.getLogger('ckanclient')
 
-class CkanClient(object):
-    base_location = 'http://www.ckan.net/api'
-    resource_paths = {
-        'Base': '/',
-        'Changeset Register': '/rest/changeset',
-        'Changeset Entity': '/rest/changeset',
-        'Package Register': '/rest/package',
-        'Package Entity': '/rest/package',
-        'Tag Register': '/rest/tag',
-        'Tag Entity': '/rest/tag',
-        'Group Register': '/rest/group',
-        'Group Entity': '/rest/group',
-        'Package Search': '/search/package',
-    }
+class Request(urllib2.Request):
+    def __init__(self, url, data=None, headers={}, method=None):
+        urllib2.Request.__init__(self, url, data, headers)
+        self._method = method
+        
+    def get_method(self):
+        if self.has_data():
+            if not self._method:
+                return 'POST'
+            assert self._method in ('POST', 'PUT'), 'Invalid method "%s" for request with data.' % self._method
+            return self._method
+        else:
+            if not self._method:
+                return 'GET'
+            assert self._method in ('GET', 'DELETE'), 'Invalid method "%s" for request without data.' % self._method
+            return self._method
 
-    def __init__(self, base_location=None, api_key=None, is_verbose=False,
-                 http_user=None, http_pass=None):
-        if base_location is not None:
-            self.base_location = base_location
-        self.api_key = api_key
-        self.is_verbose = is_verbose
-        if http_user and http_pass:
-            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            password_mgr.add_password(None, base_location,
-                                      http_user, http_pass)
-            handler = urllib2.HTTPBasicAuthHandler(password_mgr)
-            opener = urllib2.build_opener(handler)
-            urllib2.install_opener(opener)
-    
-    def _print(self, msg):
-        '''Print depending on self.is_verbose and log at the same time.'''
-        logger.debug(msg)
-        if self.is_verbose:
-            print(msg)
+
+class ApiClient(object):
 
     def reset(self):
         self.last_location = None
@@ -183,7 +168,7 @@ class CkanClient(object):
             self.last_headers = self.url_response.headers
             self._print('ckanclient: last headers %s' % self.last_headers)
             try:
-                self.last_message = self.__loadstr(self.last_body)
+                self.last_message = self._loadstr(self.last_body)
                 self._print('ckanclient: last message %s' % self.last_message)
             except ValueError:
                 pass
@@ -199,11 +184,65 @@ class CkanClient(object):
                     path += '/' + entity2_id            
         return base + path
 
+    def _dumpstr(self, data):
+        try: # since python 2.6
+            import json
+        except ImportError:
+            import simplejson as json
+        return json.dumps(data)
+    
+    def _loadstr(self, string):
+        try: # since python 2.6
+            import json
+        except ImportError:
+            import simplejson as json
+        return json.loads(string)
+
+
+    def _print(self, msg):
+        '''Print depending on self.is_verbose and log at the same time.'''
+        logger.debug(msg)
+        if self.is_verbose:
+            print(msg)
+
+    # Todo: Remove this method, since there is no 'Base' resource?
     def open_base_location(self):
         self.reset()
         url = self.get_location('Base')
         self.open_url(self.base_location)
+        return self.last_message
 
+
+class CkanClient(ApiClient):
+    base_location = 'http://www.ckan.net/api'
+    resource_paths = {
+        'Base': '/',
+        'Changeset Register': '/rest/changeset',
+        'Changeset Entity': '/rest/changeset',
+        'Package Register': '/rest/package',
+        'Package Entity': '/rest/package',
+        'Tag Register': '/rest/tag',
+        'Tag Entity': '/rest/tag',
+        'Group Register': '/rest/group',
+        'Group Entity': '/rest/group',
+        'Package Search': '/search/package',
+        'Package Edit Form': '/form/package/edit',
+    }
+
+    def __init__(self, base_location=None, api_key=None, is_verbose=False,
+                 http_user=None, http_pass=None):
+        if base_location is not None:
+            self.base_location = base_location
+        self.api_key = api_key
+        self.is_verbose = is_verbose
+        if http_user and http_pass:
+            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_mgr.add_password(None, base_location,
+                                      http_user, http_pass)
+            handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+            opener = urllib2.build_opener(handler)
+            urllib2.install_opener(opener)
+    
     def changeset_register_get(self):
         self.reset()
         url = self.get_location('Changeset Register')
@@ -225,9 +264,10 @@ class CkanClient(object):
     def package_register_post(self, package_dict):
         self.reset()
         url = self.get_location('Package Register')
-        data = self.__dumpstr(package_dict)
+        data = self._dumpstr(package_dict)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers)
+        return self.last_message
 
     def package_entity_get(self, package_name):
         self.reset()
@@ -239,15 +279,17 @@ class CkanClient(object):
         self.reset()
         package_name = package_dict['name']
         url = self.get_location('Package Entity', package_name)
-        data = self.__dumpstr(package_dict)
+        data = self._dumpstr(package_dict)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers, method='PUT')
+        return self.last_message
 
     def package_entity_delete(self, package_name):
         self.reset()
         url = self.get_location('Package Register', package_name)
         headers = {'Authorization': self.api_key}
         self.open_url(url, headers=headers, method='DELETE')
+        return self.last_message
 
     def package_relationship_register_get(self, package_name,
                 relationship_type='relationships', 
@@ -268,9 +310,10 @@ class CkanClient(object):
             entity_id=subject_package_name,
             subregister=relationship_type,
             entity2_id=object_package_name)
-        data = self.__dumpstr({'comment':comment})
+        data = self._dumpstr({'comment':comment})
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers, method='POST')
+        return self.last_message
 
     def package_relationship_entity_put(self, subject_package_name,
                 relationship_type, object_package_name, comment=u''):
@@ -279,9 +322,10 @@ class CkanClient(object):
             entity_id=subject_package_name,
             subregister=relationship_type,
             entity2_id=object_package_name)
-        data = self.__dumpstr({'comment':comment})
+        data = self._dumpstr({'comment':comment})
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers, method='PUT')
+        return self.last_message
 
     def package_relationship_entity_delete(self, subject_package_name,
                 relationship_type, object_package_name):
@@ -309,9 +353,10 @@ class CkanClient(object):
     def group_register_post(self, group_dict):
         self.reset()
         url = self.get_location('Group Register')
-        data = self.__dumpstr(group_dict)
+        data = self._dumpstr(group_dict)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers)
+        return self.last_message
 
     def group_register_get(self):
         self.reset()
@@ -329,50 +374,29 @@ class CkanClient(object):
         self.reset()
         group_name = group_dict['name']
         url = self.get_location('Group Entity', group_name)
-        data = self.__dumpstr(group_dict)
+        data = self._dumpstr(group_dict)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers, method='PUT')
+        return self.last_message
 
     def package_search(self, q, search_options={}):
         self.reset()
         url = self.get_location('Package Search')
         search_options['q'] = q
-        data = self.__dumpstr(search_options)
+        data = self._dumpstr(search_options)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers)
         return self.last_message
 
-    def __dumpstr(self, data):
-        try: # since python 2.6
-            import json
-        except ImportError:
-            import simplejson as json
-        return json.dumps(data)
-    
-    def __loadstr(self, string):
-        try: # since python 2.6
-            import json
-        except ImportError:
-            import simplejson as json
-        return json.loads(string)
+    #
+    # Form API.
+    #
+
+    def package_edit_form_get(self, package_ref):
+        self.reset()
+        url = self.get_location('Package Edit Form', package_ref)
+        self.open_url(url)
+        return self.last_message
 
 
-class Request(urllib2.Request):
-    def __init__(self, url, data=None, headers={}, method=None):
-        urllib2.Request.__init__(self, url, data, headers)
-        self._method = method
-        
-    def get_method(self):
-        if self.has_data():
-            if not self._method:
-                return 'POST'
-            assert self._method in ('POST', 'PUT'), 'Invalid method "%s" for request with data.' % self._method
-            return self._method
-        else:
-            if not self._method:
-                return 'GET'
-            assert self._method in ('GET', 'DELETE'), 'Invalid method "%s" for request without data.' % self._method
-            return self._method
-            
-                
 

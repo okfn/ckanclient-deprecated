@@ -272,3 +272,8 @@ class TestCkanClient(object):
         res = self.c.package_relationship_register_get('annakarenina', 'relationships', 'warandpeace')
         assert self.c.last_status == 200, self.c.last_status
         assert not res, res
+
+    def test_15_package_edit_form_get(self):
+        res = self.c.package_edit_form_get('annakarenina')
+        assert self.c.last_status == 200, self.c.last_status
+        assert not res, res
