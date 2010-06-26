@@ -17,6 +17,7 @@ class TestCkanClient(object):
     #      $ nosetests ckanclient/tests
 
     def setup(self):
+        self.is_a_relationships_test = False
         self.c = CkanClient(
             base_location=self.test_base_location,
             api_key=self.test_api_key,
@@ -24,8 +25,12 @@ class TestCkanClient(object):
         )
         self.pkg_name_test_07 = self._generate_pkg_name()
 
+
     def teardown(self):
-        # delete relationships
+        if self.is_a_relationships_test:
+            self.delete_relationships()
+
+    def delete_relationships(self):
         res = self.c.package_relationship_register_get('annakarenina')
         if self.c.last_status == 200:
             if self.c.last_message:
@@ -137,6 +142,8 @@ class TestCkanClient(object):
         status = self.c.last_status
         assert status == 200, status
         message = self.c.last_message
+        assert message
+        assert 'name' in message, repr(message)
         name = message['name']
         assert name == pkg_name
         url = message['url']
@@ -223,6 +230,7 @@ class TestCkanClient(object):
         assert res['results'] == [u'annakarenina']
 
     def test_11_package_relationship_post(self):
+        self.is_a_relationships_test = True
         res = self.c.package_relationship_register_get('annakarenina')
         assert self.c.last_status == 200, self.c.last_status
         assert not self.c.last_message, self.c.last_body
@@ -232,6 +240,7 @@ class TestCkanClient(object):
         assert self.c.last_status == 200, self.c.last_status
         
     def test_12_package_relationship_get(self):
+        self.is_a_relationships_test = True
         # check no existing relationships
         # follows on from test_11
         self.test_11_package_relationship_post()
@@ -246,6 +255,7 @@ class TestCkanClient(object):
         assert rels[0]['comment'] == 'some comment', rels[0]
 
     def test_13_package_relationship_put(self):
+        self.is_a_relationships_test = True
         # follows on from test_12
         self.test_12_package_relationship_get()
         # update relationship
@@ -260,6 +270,7 @@ class TestCkanClient(object):
         assert rels[0]['comment'] == 'new comment', rels[0]
 
     def test_14_package_relationship_delete(self):
+        self.is_a_relationships_test = True
         # follows on from test_11/12
         self.c.package_relationship_entity_delete('annakarenina',
                                                   'child_of', 'warandpeace')
@@ -276,4 +287,14 @@ class TestCkanClient(object):
     def test_15_package_edit_form_get(self):
         res = self.c.package_edit_form_get('annakarenina')
         assert self.c.last_status == 200, self.c.last_status
-        assert not res, res
+        assert res, res
+
+    def test_15_package_edit_form_post(self):
+        res = self.c.package_edit_form_get('annakarenina')
+        # Todo: Parse form into list of name/value pairs (use webtest classes) and assign to form_data.
+        form_data = []
+        form_submission = {
+            'form_data': form_data,
+        }
+        res = self.c.package_edit_form_post('annakarenina', form_submission)
+        

@@ -167,11 +167,16 @@ class ApiClient(object):
             self._print('ckanclient: last body %s' % self.last_body)
             self.last_headers = self.url_response.headers
             self._print('ckanclient: last headers %s' % self.last_headers)
-            try:
+            content_type = self.last_headers['Content-Type']
+            self._print('ckanclient: content type: %s' % content_type)
+            is_json_response = False
+            if 'json' in content_type:
+                is_json_response = True
+            if is_json_response:
                 self.last_message = self._loadstr(self.last_body)
-                self._print('ckanclient: last message %s' % self.last_message)
-            except ValueError:
-                pass
+            else:
+                self.last_message = self.last_body
+            self._print('ckanclient: last message %s' % self.last_message)
     
     def get_location(self, resource_name, entity_id=None, subregister=None, entity2_id=None):
         base = self.base_location
@@ -196,11 +201,19 @@ class ApiClient(object):
             import json
         except ImportError:
             import simplejson as json
-        return json.loads(string)
-
+        try:
+            if string == '':
+                data = None
+            else:
+                data = json.loads(string)
+        except ValueError, exception:
+            msg = "Couldn't decode data from JSON string: '%s': %s" % (string, exception)
+            raise ValueError, msg
+        return data
 
     def _print(self, msg):
         '''Print depending on self.is_verbose and log at the same time.'''
+        return
         logger.debug(msg)
         if self.is_verbose:
             print(msg)
@@ -396,6 +409,14 @@ class CkanClient(ApiClient):
         self.reset()
         url = self.get_location('Package Edit Form', package_ref)
         self.open_url(url)
+        return self.last_message
+
+    def package_edit_form_post(self, package_ref, form_submission):
+        self.reset()
+        url = self.get_location('Package Edit Form', package_ref)
+        data = self._dumpstr(form_submission)
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, data, headers)
         return self.last_message
 
 
