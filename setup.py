@@ -8,10 +8,6 @@ except ImportError:
 from ckanclient import __version__, __description__, __long_description__, __license__
 
 import os
-scripts = [
-    os.path.join('bin', 'ckanload-aidprojdata'),
-    os.path.join('bin', 'ckanload-norwaygovdata'),
-]
 
 setup(
     name='ckanclient',
@@ -28,7 +24,6 @@ setup(
         # 'simplejson',
     ],
     packages=find_packages(exclude=['ez_setup']),
-    scripts=scripts,
     include_package_data=True,
     always_unzip=True,
     classifiers = [
