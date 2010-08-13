@@ -288,9 +288,12 @@ class CkanClient(ApiClient):
         self.open_url(url)
         return self.last_message
 
-    def package_entity_put(self, package_dict):
+    def package_entity_put(self, package_dict, package_name=None):
+        # You only need to specify the current package_name if you
+        # are giving it a new package_name in the package_dict.
         self.reset()
-        package_name = package_dict['name']
+        if not package_name:
+            package_name = package_dict['name']
         url = self.get_location('Package Entity', package_name)
         data = self._dumpstr(package_dict)
         headers = {'Authorization': self.api_key}
