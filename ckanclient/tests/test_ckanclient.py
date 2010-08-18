@@ -298,3 +298,13 @@ class TestCkanClient(object):
         }
         res = self.c.package_edit_form_post('annakarenina', form_submission)
         
+    def test_16_group_get(self):
+        groups = self.c.group_register_get()
+        assert 'david' in groups, groups
+        assert 'roger' in groups
+        david = self.c.group_entity_get('david')
+        for expected_key in ('name', 'id', 'title', 'created', 'description'):
+            assert expected_key in david, david
+        assert set(david['packages']) == set((u'annakarenina', u'warandpeace')), david
+        roger = self.c.group_entity_get('roger')
+        assert roger['packages'] == [u'annakarenina'], roger
