@@ -99,7 +99,7 @@ v0.1 2008-04
 
 __license__ = 'MIT'
 
-import os, urllib, urllib2
+import os, urllib, urllib2, re
 import logging
 logger = logging.getLogger('ckanclient')
 
@@ -386,9 +386,12 @@ class CkanClient(ApiClient):
         self.open_url(url)
         return self.last_message
 
-    def group_entity_put(self, group_dict):
+    def group_entity_put(self, group_dict, group_name=None):
+        # You only need to specify the current group_name if you
+        # are giving it a new group_name in the group_dict.
         self.reset()
-        group_name = group_dict['name']
+        if not group_name:
+            group_name = group_dict['name']
         url = self.get_location('Group Entity', group_name)
         data = self._dumpstr(group_dict)
         headers = {'Authorization': self.api_key}
@@ -422,5 +425,6 @@ class CkanClient(ApiClient):
         self.open_url(url, data, headers)
         return self.last_message
 
-
-
+    def is_id(self, id_string):
+        '''Tells the client if the string looks like an id or not'''
+        return bool(re.match('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', id_string))
