@@ -227,6 +227,15 @@ class ApiClient(object):
 
 
 class CkanClient(ApiClient):
+    """
+    Client API implementation for CKAN.
+
+    :param base_location: default *http://www.ckan.net/api*
+    :param api_key: default *None*
+    :param is_verbose: default *False*
+    :param http_user: default *None*
+    :param http_pass: default *None*
+    """
     base_location = 'http://www.ckan.net/api'
     resource_paths = {
         'Base': '/',
