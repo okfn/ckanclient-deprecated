@@ -407,8 +407,9 @@ class CkanClient(ApiClient):
         self.open_url(url, data, headers, method='PUT')
         return self.last_message
 
-    def package_search(self, q, search_options={}):
+    def package_search(self, q, search_options=None):
         self.reset()
+        search_options = search_options.copy() or {}
         url = self.get_location('Package Search')
         search_options['q'] = q
         data = self._dumpstr(search_options)
