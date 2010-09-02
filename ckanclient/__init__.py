@@ -409,7 +409,7 @@ class CkanClient(ApiClient):
 
     def package_search(self, q, search_options=None):
         self.reset()
-        search_options = search_options.copy() or {}
+        search_options = search_options.copy() if search_options else {}
         url = self.get_location('Package Search')
         search_options['q'] = q
         data = self._dumpstr(search_options)
