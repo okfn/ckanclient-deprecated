@@ -99,7 +99,7 @@ v0.1 2008-04
 
 __license__ = 'MIT'
 
-import os, urllib, urllib2
+import os, urllib, urllib2, re
 import logging
 logger = logging.getLogger('ckanclient')
 
@@ -227,6 +227,15 @@ class ApiClient(object):
 
 
 class CkanClient(ApiClient):
+    """
+    Client API implementation for CKAN.
+
+    :param base_location: default *http://www.ckan.net/api*
+    :param api_key: default *None*
+    :param is_verbose: default *False*
+    :param http_user: default *None*
+    :param http_pass: default *None*
+    """
     base_location = 'http://www.ckan.net/api'
     resource_paths = {
         'Base': '/',
@@ -289,9 +298,12 @@ class CkanClient(ApiClient):
         self.open_url(url)
         return self.last_message
 
-    def package_entity_put(self, package_dict):
+    def package_entity_put(self, package_dict, package_name=None):
+        # You only need to specify the current package_name if you
+        # are giving it a new package_name in the package_dict.
         self.reset()
-        package_name = package_dict['name']
+        if not package_name:
+            package_name = package_dict['name']
         url = self.get_location('Package Entity', package_name)
         data = self._dumpstr(package_dict)
         headers = {'Authorization': self.api_key}
@@ -384,17 +396,21 @@ class CkanClient(ApiClient):
         self.open_url(url)
         return self.last_message
 
-    def group_entity_put(self, group_dict):
+    def group_entity_put(self, group_dict, group_name=None):
+        # You only need to specify the current group_name if you
+        # are giving it a new group_name in the group_dict.
         self.reset()
-        group_name = group_dict['name']
+        if not group_name:
+            group_name = group_dict['name']
         url = self.get_location('Group Entity', group_name)
         data = self._dumpstr(group_dict)
         headers = {'Authorization': self.api_key}
         self.open_url(url, data, headers, method='PUT')
         return self.last_message
 
-    def package_search(self, q, search_options={}):
+    def package_search(self, q, search_options=None):
         self.reset()
+        search_options = search_options.copy() if search_options else {}
         url = self.get_location('Package Search')
         search_options['q'] = q
         data = self._dumpstr(search_options)
@@ -434,5 +450,6 @@ class CkanClient(ApiClient):
         self.open_url(url, data, headers)
         return self.last_message
 
-
-
+    def is_id(self, id_string):
+        '''Tells the client if the string looks like an id or not'''
+        return bool(re.match('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', id_string))
