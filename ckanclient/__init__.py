@@ -239,6 +239,7 @@ class CkanClient(ApiClient):
         'Group Register': '/rest/group',
         'Group Entity': '/rest/group',
         'Package Search': '/search/package',
+        'Package Create Form': '/form/package/create',
         'Package Edit Form': '/form/package/edit',
     }
 
@@ -404,6 +405,20 @@ class CkanClient(ApiClient):
     #
     # Form API.
     #
+
+    def package_create_form_get(self):
+        self.reset()
+        url = self.get_location('Package Create Form')
+        self.open_url(url)
+        return self.last_message
+
+    def package_create_form_post(self, form_submission):
+        self.reset()
+        url = self.get_location('Package Create Form')
+        data = self._dumpstr(form_submission)
+        headers = {'Authorization': self.api_key}
+        self.open_url(url, data, headers)
+        return self.last_message
 
     def package_edit_form_get(self, package_ref):
         self.reset()
