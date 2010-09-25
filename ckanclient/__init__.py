@@ -288,7 +288,10 @@ class CkanClient(ApiClient):
         self.reset()
         url = self.get_location('Package Register')
         data = self._dumpstr(package_dict)
-        headers = {'Authorization': self.api_key}
+        headers = {
+            'Authorization': self.api_key,
+            'X-CKAN-API-KEY': self.api_key
+            }
         self.open_url(url, data, headers)
         return self.last_message
 
