@@ -217,6 +217,7 @@ class CkanLoader(object):
         package['name'] = self.coerce_package_name(name)
         package['title'] = title
         package['url'] = url
+        package['notes'] = notes
         package['maintainer'] = maintainer
         package['maintainer_email'] = maintainer_email
         package['author'] = author
@@ -391,7 +392,10 @@ class SimpleGoogleSpreadsheetLoader(AbstractGoogleSpreadsheetLoader):
         print "There are %s entities: %s" % (len(self.entities), ", ".join([self.coerce_package_name(e[self.headings[0]]) for e in self.entities]))
         # Construct packages.
         for entity in self.entities:
-            entity.pop('')
+            # Why do we pop empty string?
+            # Allow for case where '' not there
+            if '' in entity:
+                entity.pop('')
             package = self.entity_to_package(entity)
             if package:
                 self.packages.append(package)
