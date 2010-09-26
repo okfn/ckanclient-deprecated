@@ -266,6 +266,12 @@ class CkanClient(ApiClient):
             opener = urllib2.build_opener(handler)
             urllib2.install_opener(opener)
     
+    def _auth_headers(self):
+        return {
+            'Authorization': self.api_key,
+            'X-CKAN-API-Key': self.api_key
+            }
+    
     def changeset_register_get(self):
         self.reset()
         url = self.get_location('Changeset Register')
@@ -288,10 +294,7 @@ class CkanClient(ApiClient):
         self.reset()
         url = self.get_location('Package Register')
         data = self._dumpstr(package_dict)
-        headers = {
-            'Authorization': self.api_key,
-            'X-CKAN-API-KEY': self.api_key
-            }
+        headers = self._auth_headers()
         self.open_url(url, data, headers)
         return self.last_message
 
@@ -309,14 +312,14 @@ class CkanClient(ApiClient):
             package_name = package_dict['name']
         url = self.get_location('Package Entity', package_name)
         data = self._dumpstr(package_dict)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, data, headers, method='PUT')
         return self.last_message
 
     def package_entity_delete(self, package_name):
         self.reset()
         url = self.get_location('Package Register', package_name)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, headers=headers, method='DELETE')
         return self.last_message
 
@@ -328,7 +331,7 @@ class CkanClient(ApiClient):
            entity_id=package_name,
            subregister=relationship_type,
            entity2_id=relationship_with_package_name)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, headers=headers)
         return self.last_message
 
@@ -340,7 +343,7 @@ class CkanClient(ApiClient):
             subregister=relationship_type,
             entity2_id=object_package_name)
         data = self._dumpstr({'comment':comment})
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, data, headers, method='POST')
         return self.last_message
 
@@ -352,7 +355,7 @@ class CkanClient(ApiClient):
             subregister=relationship_type,
             entity2_id=object_package_name)
         data = self._dumpstr({'comment':comment})
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, data, headers, method='PUT')
         return self.last_message
 
@@ -363,7 +366,7 @@ class CkanClient(ApiClient):
             entity_id=subject_package_name,
             subregister=relationship_type,
             entity2_id=object_package_name)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, headers=headers, method='DELETE')
         return self.last_message
 
@@ -383,7 +386,7 @@ class CkanClient(ApiClient):
         self.reset()
         url = self.get_location('Group Register')
         data = self._dumpstr(group_dict)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, data, headers)
         return self.last_message
 
@@ -407,7 +410,7 @@ class CkanClient(ApiClient):
             group_name = group_dict['name']
         url = self.get_location('Group Entity', group_name)
         data = self._dumpstr(group_dict)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, data, headers, method='PUT')
         return self.last_message
 
@@ -417,7 +420,7 @@ class CkanClient(ApiClient):
         url = self.get_location('Package Search')
         search_options['q'] = q
         data = self._dumpstr(search_options)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, data, headers)
         return self.last_message
 
@@ -435,7 +438,7 @@ class CkanClient(ApiClient):
         self.reset()
         url = self.get_location('Package Create Form')
         data = self._dumpstr(form_submission)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, data, headers)
         return self.last_message
 
@@ -449,7 +452,7 @@ class CkanClient(ApiClient):
         self.reset()
         url = self.get_location('Package Edit Form', package_ref)
         data = self._dumpstr(form_submission)
-        headers = {'Authorization': self.api_key}
+        headers = self._auth_headers()
         self.open_url(url, data, headers)
         return self.last_message
 
