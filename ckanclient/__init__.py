@@ -218,13 +218,6 @@ class ApiClient(object):
         if self.is_verbose:
             print(msg)
 
-    # Todo: Remove this method, since there is no 'Base' resource?
-    def open_base_location(self):
-        self.reset()
-        url = self.get_location('Base')
-        self.open_url(self.base_location)
-        return self.last_message
-
 
 class CkanClient(ApiClient):
     """
@@ -238,7 +231,7 @@ class CkanClient(ApiClient):
     """
     base_location = 'http://www.ckan.net/api'
     resource_paths = {
-        'Base': '/',
+        'Base': '',
         'Changeset Register': '/rest/changeset',
         'Changeset Entity': '/rest/changeset',
         'Package Register': '/rest/package',
@@ -265,24 +258,25 @@ class CkanClient(ApiClient):
             handler = urllib2.HTTPBasicAuthHandler(password_mgr)
             opener = urllib2.build_opener(handler)
             urllib2.install_opener(opener)
-    
+
     def _auth_headers(self):
         return {
             'Authorization': self.api_key,
             'X-CKAN-API-Key': self.api_key
             }
-    
-    def changeset_register_get(self):
-        self.reset()
-        url = self.get_location('Changeset Register')
-        self.open_url(url)
-        return self.last_message
 
-    def changeset_entity_get(self, changeset_name):
+            
+    def api_version_get(self):
         self.reset()
-        url = self.get_location('Changeset Entity', changeset_name)
+        url = self.get_location('Base')
         self.open_url(url)
-        return self.last_message
+        version = self.last_message['version']
+        return version    
+
+
+    #
+    # Model API
+    #
 
     def package_register_get(self):
         self.reset()
@@ -414,6 +408,10 @@ class CkanClient(ApiClient):
         self.open_url(url, data, headers, method='PUT')
         return self.last_message
 
+    #
+    # Search API
+    #
+
     def package_search(self, q, search_options=None):
         self.reset()
         search_options = search_options.copy() if search_options else {}
@@ -425,7 +423,7 @@ class CkanClient(ApiClient):
         return self.last_message
 
     #
-    # Form API.
+    # Form API
     #
 
     def package_create_form_get(self):
@@ -455,6 +453,26 @@ class CkanClient(ApiClient):
         headers = self._auth_headers()
         self.open_url(url, data, headers)
         return self.last_message
+
+    #
+    # Changeset API
+    #
+    
+    def changeset_register_get(self):
+        self.reset()
+        url = self.get_location('Changeset Register')
+        self.open_url(url)
+        return self.last_message
+
+    def changeset_entity_get(self, changeset_name):
+        self.reset()
+        url = self.get_location('Changeset Entity', changeset_name)
+        self.open_url(url)
+        return self.last_message
+
+    #
+    # Utils
+    #
 
     def is_id(self, id_string):
         '''Tells the client if the string looks like an id or not'''

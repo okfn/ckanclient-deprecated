@@ -45,7 +45,7 @@ class TestCkanClient(object):
         rest_base = self.test_base_location + '/rest'
         search_base = self.test_base_location + '/search'
         url = self.c.get_location('Base')
-        assert url == self.test_base_location + '/', url
+        assert url == self.test_base_location, url
         url = self.c.get_location('Package Register')
         assert url == rest_base + '/package'
         url = self.c.get_location('Package Entity', 'myname')
@@ -72,23 +72,20 @@ class TestCkanClient(object):
         url = self.c.get_location('Package Search')
         assert url == search_base + '/package'
 
-    def test_02_open_base_location(self):
-        assert self.c.base_location == self.test_base_location
-        self.c.open_base_location()
+    def test_02_get_api_version(self):
+        version = self.c.api_version_get()
         status = self.c.last_status
         assert status == 200
         body = self.c.last_body
-        assert '<h2>API</h2>' in body, body
-        # Not sure why this doesn't work anymore
-        # header = self.c.last_headers.get('Connection')
-        # assert header == 'close', self.c.last_headers
+        assert 'version' in body, body
+        assert int(version) > 0, version
 
     def test_03_package_register_get(self):
         self.c.package_register_get()
         status = self.c.last_status
         assert status == 200
         body = self.c.last_body
-        assert 'annakarenina' in body
+        assert 'annakarenina' in body, body
         assert type(self.c.last_message) == list
         assert 'annakarenina' in self.c.last_message
 
