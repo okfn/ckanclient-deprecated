@@ -1,4 +1,4 @@
-__version__ = '0.3'
+__version__ = '0.4'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
 '''The CKAN client software may be used to make requests on the Comprehensive
@@ -72,6 +72,17 @@ The simplest way to make CKAN requests is:
 Changelog
 =========
 
+v0.4 2010-10-07
+---------------
+
+  * Form API added
+  * Package name editing
+  * Groups added
+  * Output can be verbose and use logger
+  * Query API version
+  * Sends API key via additional header
+  
+
 v0.3 2010-04-28
 ---------------
 
@@ -80,6 +91,7 @@ v0.3 2010-04-28
   * Package deletion fixed
   * Changeset entities added
   * Improved httpauth (thanks to will waites)
+
 
 v0.2 2009-11-05
 ---------------
