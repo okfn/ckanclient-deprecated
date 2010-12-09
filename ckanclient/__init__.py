@@ -170,7 +170,11 @@ class ApiClient(object):
             self._print("ckanclient: request data: %s" % data)
             self._print("ckanclient: error: %s" % inst)
             self.last_url_error = inst
-            self.last_status,self.last_message = inst.reason
+            if isinstance(inst.reason, tuple):
+                self.last_status,self.last_message = inst.reason
+            else:
+                self.last_message = inst.reason
+                self.last_status = inst.errno
         else:
             self._print("ckanclient: OK opening CKAN resource: %s" % location)
             self.last_status = self.url_response.code
@@ -282,6 +286,7 @@ class CkanClient(ApiClient):
         self.reset()
         url = self.get_location('Base')
         self.open_url(url)
+        assert self.last_status == 200, self.last_message
         version = self.last_message['version']
         return version    
 
