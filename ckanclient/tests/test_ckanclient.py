@@ -2,32 +2,20 @@ from ckan.tests import TestController, config_path
 
 from ckanclient import CkanClient
 
-#from ckanclient.tests import CkanServerCase
-
-# Todo: Discovery of local api-key for the okfntest:okfntest test user.
-
 class TestCkanClient(TestController):
-
-    # To run tests:
-
-    #  1. Run a test server in another shell
-    #      $ paster serve development.ini
-    #  2. On the test server run:
-    #      $ paster db clean && paster db init && paster create-test-data
-    test_base_location = 'http://127.0.0.1:5000/api'
-    # this is api key created for tester user by create-test-data in ckan
-    test_api_key = 'tester'
-    #  3. Run these tests with nose:
-    #      $ nosetests ckanclient/tests
 
     @classmethod
     def setup_class(self):
         self.pid = self._start_ckan_server()
-        self._wait_for_url(url='http://localhost:5000/api')
+        self.test_base_location = 'http://127.0.0.1:5000/api'
+        self._wait_for_url(url=self.test_base_location)
         self._recreate_ckan_server_testdata(config_path)
+        # this is api key created for tester user by create-test-data in ckan
+        test_api_key = 'tester'
+        
         self.c = CkanClient(
             base_location=self.test_base_location,
-            api_key=self.test_api_key,
+            api_key=test_api_key,
             is_verbose=True,
         )
 
