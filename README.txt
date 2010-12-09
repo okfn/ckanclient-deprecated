@@ -22,16 +22,8 @@ or you can get the latest repository using Mercurial::
 Tests
 =====
 
-The ckanclient tests require a test instance of CKAN running at 
-127.0.0.1:5000 (for more info, see <http://knowledgeforge.net/ckan/>)::
+The ckanclient tests require the ckan and nose modules installed.
 
-    paster db clean && paster db init && paster create-test-data
-    paster serve development.ini
-
-In another shell, ensure 'nose' is installed::
-
-    easy_install nose
-
-Now run the ckanclient tests::
+To run the ckanclient tests::
 
     nosetests ckanclient/tests

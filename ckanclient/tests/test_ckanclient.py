@@ -1,8 +1,12 @@
+from ckan.tests import TestController, config_path
+
 from ckanclient import CkanClient
+
+#from ckanclient.tests import CkanServerCase
 
 # Todo: Discovery of local api-key for the okfntest:okfntest test user.
 
-class TestCkanClient(object):
+class TestCkanClient(TestController):
 
     # To run tests:
 
@@ -16,15 +20,23 @@ class TestCkanClient(object):
     #  3. Run these tests with nose:
     #      $ nosetests ckanclient/tests
 
-    def setup(self):
-        self.is_a_relationships_test = False
+    @classmethod
+    def setup_class(self):
+        self.pid = self._start_ckan_server()
+        self._wait_for_url(url='http://localhost:5000/api')
+        self._recreate_ckan_server_testdata(config_path)
         self.c = CkanClient(
             base_location=self.test_base_location,
             api_key=self.test_api_key,
             is_verbose=True,
         )
-        self.pkg_name_test_07 = self._generate_pkg_name()
 
+    @classmethod
+    def teardown_class(self):
+        self._stop_ckan_server(self.pid)
+
+    def setup(self):
+        self.is_a_relationships_test = False
 
     def teardown(self):
         if self.is_a_relationships_test:
@@ -156,8 +168,9 @@ class TestCkanClient(object):
 
     def test_07_package_entity_put(self):
         # Register new package.
+        pkg_name_test_07 = self._generate_pkg_name()
         package = {
-            'name': self.pkg_name_test_07,
+            'name': pkg_name_test_07,
             'url': 'orig_url',
             'download_url': 'orig_download_url',
             'tags': ['russian'],
@@ -167,9 +180,9 @@ class TestCkanClient(object):
         assert status == 200, status
         
         # Check update of existing package.
-        mytag = 'mytag' + self.pkg_name_test_07
+        mytag = 'mytag' + pkg_name_test_07
         package = {
-            'name': self.pkg_name_test_07,
+            'name': pkg_name_test_07,
             'url': 'new_url',
             'download_url': 'new_download_url',
             'tags': ['russian', 'tolstoy', mytag],
@@ -180,12 +193,12 @@ class TestCkanClient(object):
         assert status == 200
 
         # Check package is updated.
-        self.c.package_entity_get(self.pkg_name_test_07)
+        self.c.package_entity_get(pkg_name_test_07)
         status = self.c.last_status
         assert status == 200, status
         message = self.c.last_message
         name = message['name']
-        assert name == self.pkg_name_test_07
+        assert name == pkg_name_test_07
         url = message['url']
         assert url == 'new_url'
         download_url = message['download_url']
@@ -197,17 +210,20 @@ class TestCkanClient(object):
         assert extras == package['extras']
 
     def test_08_package_entity_delete(self):
-        # follows on from test_07
-        self.test_07_package_entity_put()
-        assert self.pkg_name_test_07
-        # check it is still there
-        self.c.package_entity_get(self.pkg_name_test_07)
+        # create a package to be deleted
+        pkg_name = self._generate_pkg_name()
+        self.c.package_register_post({'name': pkg_name})
+        status = self.c.last_status
+        assert status == 200, status        
+
+        # check it is readable
+        self.c.package_entity_get(pkg_name)
         assert self.c.last_status == 200, self.c.last_status
 
-        self.c.package_entity_delete(self.pkg_name_test_07)
+        self.c.package_entity_delete(pkg_name)
 
         # see it is not readable
-        self.c.package_entity_get(self.pkg_name_test_07)
+        self.c.package_entity_get(pkg_name)
         assert self.c.last_status == 403, self.c.last_status
 
     def test_09_tag_register_get(self):
