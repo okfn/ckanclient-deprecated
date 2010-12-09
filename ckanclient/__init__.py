@@ -115,6 +115,9 @@ import os, urllib, urllib2, re
 import logging
 logger = logging.getLogger('ckanclient')
 
+class CkanApiError(Exception):
+    pass
+
 class Request(urllib2.Request):
     def __init__(self, url, data=None, headers={}, method=None):
         urllib2.Request.__init__(self, url, data, headers)
@@ -281,12 +284,16 @@ class CkanClient(ApiClient):
             'X-CKAN-API-Key': self.api_key
             }
 
+    def open_url(self, url, *args, **kwargs):
+        result = super(CkanClient, self).open_url(url, *args, **kwargs)
+        if self.last_status not in (200, 201):
+            raise CkanApiError(self.last_message)
+        return result
             
     def api_version_get(self):
         self.reset()
         url = self.get_location('Base')
         self.open_url(url)
-        assert self.last_status == 200, self.last_message
         version = self.last_message['version']
         return version    
 

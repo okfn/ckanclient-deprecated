@@ -1,6 +1,8 @@
+from nose.tools import assert_raises
+
 from ckan.tests import TestController, config_path
 
-from ckanclient import CkanClient
+from ckanclient import CkanClient, CkanApiError
 
 class TestCkanClient(TestController):
 
@@ -22,13 +24,6 @@ class TestCkanClient(TestController):
     @classmethod
     def teardown_class(self):
         self._stop_ckan_server(self.pid)
-
-    def setup(self):
-        self.is_a_relationships_test = False
-
-    def teardown(self):
-        if self.is_a_relationships_test:
-            self.delete_relationships()
 
     def delete_relationships(self):
         res = self.c.package_relationship_register_get('annakarenina')
@@ -104,7 +99,9 @@ class TestCkanClient(TestController):
 
     def test_05_package_entity_get_404(self):
         # Check unregistered entity is not found.
-        self.c.package_entity_get('mycoffeecup')
+        assert_raises(CkanApiError,
+                      self.c.package_entity_get,
+                      'mycoffeecup')
         status = self.c.last_status
         assert status == 404, status
 
@@ -119,7 +116,8 @@ class TestCkanClient(TestController):
     def test_06_package_register_post(self):
         pkg_name = self._generate_pkg_name()
         # Check package isn't registered.
-        self.c.package_entity_get(pkg_name)
+        assert_raises(CkanApiError,
+                      self.c.package_entity_get, pkg_name)
         status = self.c.last_status
         assert status == 404, status
         # Check registration of new package.
@@ -211,7 +209,8 @@ class TestCkanClient(TestController):
         self.c.package_entity_delete(pkg_name)
 
         # see it is not readable
-        self.c.package_entity_get(pkg_name)
+        assert_raises(CkanApiError,
+                      self.c.package_entity_get, pkg_name)
         assert self.c.last_status == 403, self.c.last_status
 
     def test_09_tag_register_get(self):
@@ -231,73 +230,75 @@ class TestCkanClient(TestController):
         assert res['results'] == [u'annakarenina']
 
     def test_11_package_relationship_post(self):
-        self.is_a_relationships_test = True
         res = self.c.package_relationship_register_get('annakarenina')
         assert self.c.last_status == 200, self.c.last_status
         assert not self.c.last_message, self.c.last_body
 
         # create relationship
         res = self.c.package_relationship_entity_post('annakarenina', 'child_of', 'warandpeace', 'some comment')
-        assert self.c.last_status == 200, self.c.last_status
+        try:
+            assert self.c.last_status == 200, self.c.last_status
+        finally:
+            self.delete_relationships()
         
     def test_12_package_relationship_get(self):
-        self.is_a_relationships_test = True
-        # check no existing relationships
-        # follows on from test_11
-        self.test_11_package_relationship_post()
+        # create relationship
+        res = self.c.package_relationship_entity_post('annakarenina', 'child_of', 'warandpeace', 'some comment')
+        
         # read relationship
-        res = self.c.package_relationship_register_get('annakarenina')
-        assert self.c.last_status == 200, self.c.last_status
-        rels = self.c.last_message
-        assert len(rels) == 1, rels
-        assert rels[0]['subject'] == 'annakarenina', rels[0]
-        assert rels[0]['object'] == 'warandpeace', rels[0]
-        assert rels[0]['type'] == 'child_of', rels[0]
-        assert rels[0]['comment'] == 'some comment', rels[0]
+        try:
+            res = self.c.package_relationship_register_get('annakarenina')
+            assert self.c.last_status == 200, self.c.last_status
+            rels = self.c.last_message
+            assert len(rels) == 1, rels
+            assert rels[0]['subject'] == 'annakarenina', rels[0]
+            assert rels[0]['object'] == 'warandpeace', rels[0]
+            assert rels[0]['type'] == 'child_of', rels[0]
+            assert rels[0]['comment'] == 'some comment', rels[0]
+        finally:
+            self.delete_relationships()
 
     def test_13_package_relationship_put(self):
-        self.is_a_relationships_test = True
-        # follows on from test_12
-        self.test_12_package_relationship_get()
+        # create relationship
+        res = self.c.package_relationship_entity_post('annakarenina', 'child_of', 'warandpeace', 'some comment')
         # update relationship
-        res = self.c.package_relationship_entity_put('annakarenina', 'child_of', 'warandpeace', 'new comment')
-        assert self.c.last_status == 200, self.c.last_status
+        try:
+            res = self.c.package_relationship_entity_put('annakarenina', 'child_of', 'warandpeace', 'new comment')
+            assert self.c.last_status == 200, self.c.last_status
 
-        # read relationship
-        res = self.c.package_relationship_register_get('annakarenina')
-        assert self.c.last_status == 200, self.c.last_status
-        rels = self.c.last_message
-        assert len(rels) == 1, rels
-        assert rels[0]['comment'] == 'new comment', rels[0]
+            # read relationship
+            res = self.c.package_relationship_register_get('annakarenina')
+            assert self.c.last_status == 200, self.c.last_status
+            rels = self.c.last_message
+            assert len(rels) == 1, rels
+            assert rels[0]['comment'] == 'new comment', rels[0]
+        finally:
+            self.delete_relationships()
 
     def test_14_package_relationship_delete(self):
-        self.is_a_relationships_test = True
-        # follows on from test_11/12
-        self.c.package_relationship_entity_delete('annakarenina',
-                                                  'child_of', 'warandpeace')
+        # create relationship
+        res = self.c.package_relationship_entity_post('annakarenina', 'child_of', 'warandpeace', 'some comment')
+        try:
+            self.c.package_relationship_entity_delete('annakarenina',
+                                                      'child_of', 'warandpeace')
 
-        # read relationship gives 404
-        res = self.c.package_relationship_register_get('annakarenina', 'child_of', 'warandpeace')
-        assert self.c.last_status == 404, self.c.last_status
+            # read relationship gives 404
+            assert_raises(CkanApiError,
+                          self.c.package_relationship_register_get,
+                          'annakarenina', 'child_of', 'warandpeace')
+            assert self.c.last_status == 404, self.c.last_status
 
-        # and register of relationships is blank
-        res = self.c.package_relationship_register_get('annakarenina', 'relationships', 'warandpeace')
-        assert self.c.last_status == 200, self.c.last_status
-        assert not res, res
+            # and register of relationships is blank
+            res = self.c.package_relationship_register_get('annakarenina', 'relationships', 'warandpeace')
+            assert self.c.last_status == 200, self.c.last_status
+            assert not res, res
+        finally:
+            self.delete_relationships()
 
     def test_15_package_edit_form_get(self):
         res = self.c.package_edit_form_get('annakarenina')
         assert self.c.last_status == 200, self.c.last_status
         assert res, res
-
-    def test_15_package_edit_form_post(self):
-        res = self.c.package_edit_form_get('annakarenina')
-        # Todo: Parse form into list of name/value pairs (use webtest classes) and assign to form_data.
-        form_data = []
-        form_submission = {
-            'form_data': form_data,
-        }
-        res = self.c.package_edit_form_post('annakarenina', form_submission)
         
     def test_16_group_get(self):
         groups = self.c.group_register_get()
