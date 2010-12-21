@@ -14,10 +14,16 @@ class TestCkanClient(TestController):
         self._recreate_ckan_server_testdata(config_path)
         # this is api key created for tester user by create-test-data in ckan
         test_api_key = 'tester'
+        test_api_key2 = 'tester2'
         
         self.c = CkanClient(
             base_location=self.test_base_location,
             api_key=test_api_key,
+            is_verbose=True,
+        )
+        self.c2 = CkanClient(
+            base_location=self.test_base_location,
+            api_key=test_api_key2,
             is_verbose=True,
         )
 
@@ -206,12 +212,17 @@ class TestCkanClient(TestController):
         self.c.package_entity_get(pkg_name)
         assert self.c.last_status == 200, self.c.last_status
 
+        # delete it
         self.c.package_entity_delete(pkg_name)
 
-        # see it is not readable
+        # see it is not readable by another user
         assert_raises(CkanApiError,
-                      self.c.package_entity_get, pkg_name)
-        assert self.c.last_status == 403, self.c.last_status
+                      self.c2.package_entity_get, pkg_name)
+        assert self.c2.last_status == 403, self.c.last_status
+
+        # see it is still readable by the author (therefore pkg admin)
+        self.c.package_entity_get(pkg_name)
+        assert self.c.last_status == 200, self.c.last_status
 
     def test_09_tag_register_get(self):
         self.c.tag_register_get()
