@@ -1,4 +1,4 @@
-__version__ = '0.4'
+__version__ = '0.5'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
 '''The CKAN client software may be used to make requests on the Comprehensive
@@ -71,6 +71,12 @@ The simplest way to make CKAN requests is:
 
 Changelog
 =========
+
+v0.5 2010-12-15
+---------------
+
+  * Exception raised on error (more Pythonic)
+  
 
 v0.4 2010-10-07
 ---------------
@@ -319,7 +325,8 @@ class CkanClient(ApiClient):
     def package_entity_get(self, package_name):
         self.reset()
         url = self.get_location('Package Entity', package_name)
-        self.open_url(url)
+        headers = self._auth_headers()
+        self.open_url(url, headers=headers)
         return self.last_message
 
     def package_entity_put(self, package_dict, package_name=None):
