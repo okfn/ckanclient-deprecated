@@ -502,9 +502,46 @@ class CkanClient(ApiClient):
         return self.last_message
 
     #
+    # data API
+    #
+    def _storage_metadata_url(self, path):
+        url = self.base_location
+        if not url.endswith("/"): url += "/"
+        url += "storage/metadata"
+        if not path.startswith("/"): url += "/"
+        url += path
+        return url
+    def storage_metadata_get(self, path):
+        url = self._storage_metadata_url(path)
+        self.open_url(url)
+        return self._loadstr(self.last_message)
+    def storage_metadata_set(self, path, metadata):
+        url = self._storage_metadata_url(path)
+        payload = self._dumpstr(metadata)
+        self.open_url(url, payload, method="PUT")
+        return self._loadstr(self.last_message)
+    def storage_metadata_update(self, path, metadata):
+        url = self._storage_metadata_url(path)
+        payload = self._dumpstr(metadata)
+        self.open_url(url, payload, method="POST")
+        return self._loadstr(self.last_message)
+
+    def _storage_auth_url(self, path):
+        url = self.base_location
+        if not url.endswith("/"): url += "/"
+        url += "storage/auth"
+        if not path.startswith("/"): url += "/"
+        url += path
+        return url
+    def storage_auth_get(self, path, headers):
+        url = self._storage_auth_url(path)
+        payload = self._dumpstr(headers)
+        self.open_url(url, payload, method="POST")
+        return self._loadstr(self.last_message)
+    
+    #
     # Utils
     #
-
     def is_id(self, id_string):
         '''Tells the client if the string looks like an id or not'''
         return bool(re.match('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', id_string))
