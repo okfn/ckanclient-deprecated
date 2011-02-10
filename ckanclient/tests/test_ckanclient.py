@@ -1,10 +1,17 @@
-from nose.tools import assert_raises
+import exceptions
 
-from ckan.tests import TestController, config_path
+from nose.tools import assert_raises, assert_equal
+from nose.plugins.skip import SkipTest
+from pylons import config
+
+from ckan.tests import CkanServerCase
 
 from ckanclient import CkanClient, CkanApiError
 
-class TestCkanClient(TestController):
+
+config_path = config['__file__']
+
+class TestCkanClient(CkanServerCase):
 
     @classmethod
     def setup_class(self):
@@ -136,7 +143,7 @@ class TestCkanClient(TestController):
         }
         self.c.package_register_post(package)
         status = self.c.last_status
-        assert status == 200, status
+        assert status == 201, status
 
         # Check package is registered.
         self.c.package_entity_get(pkg_name)
@@ -156,7 +163,7 @@ class TestCkanClient(TestController):
         assert set(tags) == set(['newtag', 'russian']), tags
         extras = message['extras']
         assert extras == package['extras']
-        
+                    
 
     def test_07_package_entity_put(self):
         # Register new package.
@@ -169,8 +176,8 @@ class TestCkanClient(TestController):
         }
         self.c.package_register_post(package)
         status = self.c.last_status
-        assert status == 200, status
-        
+        assert status == 201, status
+
         # Check update of existing package.
         mytag = 'mytag' + pkg_name_test_07
         package = {
@@ -201,12 +208,13 @@ class TestCkanClient(TestController):
         extras = message['extras']
         assert extras == package['extras']
 
+
     def test_08_package_entity_delete(self):
         # create a package to be deleted
         pkg_name = self._generate_pkg_name()
         self.c.package_register_post({'name': pkg_name})
         status = self.c.last_status
-        assert status == 200, status        
+        assert status == 201, status        
 
         # check it is readable
         self.c.package_entity_get(pkg_name)
@@ -234,11 +242,19 @@ class TestCkanClient(TestController):
         assert 'russian' in self.c.last_message
 
     def test_10_pkg_search_basic(self):
-        res = self.c.package_search('annakarenina')
+        res = self.c.package_search('Novel')
         status = self.c.last_status
         assert status == 200, status
-        assert res['count'] == 1, res
-        assert res['results'] == [u'annakarenina']
+        assert_equal(list(res['results']), [u'annakarenina'])
+        assert_equal(res['count'], 1)
+
+    def test_10_pkg_search_paged(self):
+        res = self.c.package_search('russian', search_options={'limit': 1})
+        status = self.c.last_status
+        assert status == 200, status
+        all_results = list(res['results'])
+        assert set(all_results) >= set([u'annakarenina', u'warandpeace']), all_results
+        assert res['count'] >= 2, '%r %r' % (res, all_results)
 
     def test_11_package_relationship_post(self):
         res = self.c.package_relationship_register_get('annakarenina')
@@ -307,6 +323,13 @@ class TestCkanClient(TestController):
             self.delete_relationships()
 
     def test_15_package_edit_form_get(self):
+        try:
+            import ckanext.dgu
+        except exceptions.ImportError, e:
+            raise SkipTest('Need dgu_form_api plugin (from ckanext-dgu) installed to test form api client.')
+        if 'dgu_form_api' not in config.get('ckan.plugins', ''):
+            raise SkipTest('Need dgu_form_api plugin (from ckanext-dgu) enabled to test form api client.')
+            
         res = self.c.package_edit_form_get('annakarenina')
         assert self.c.last_status == 200, self.c.last_status
         assert res, res

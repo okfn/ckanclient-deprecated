@@ -1,4 +1,4 @@
-__version__ = '0.6'
+__version__ = '0.7'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
 '''The CKAN client software may be used to make requests on the Comprehensive
@@ -72,6 +72,13 @@ The simplest way to make CKAN requests is:
 Changelog
 =========
 
+v0.7 2010-01-27
+---------------
+
+  * Package search returns results as a generator
+    (rather than a list that needs to be paged)
+  
+
 v0.5 2010-12-15
 ---------------
 
@@ -117,9 +124,12 @@ v0.1 2008-04
 
 __license__ = 'MIT'
 
+PAGE_SIZE = 10
+
 import os, urllib, urllib2, re
 import logging
 logger = logging.getLogger('ckanclient')
+
 
 class CkanApiError(Exception):
     pass
@@ -448,11 +458,35 @@ class CkanClient(ApiClient):
         search_options = search_options.copy() if search_options else {}
         url = self.get_location('Package Search')
         search_options['q'] = q
+        if not search_options.get('limit'):
+            search_options['limit'] = PAGE_SIZE
         data = self._dumpstr(search_options)
         headers = self._auth_headers()
         self.open_url(url, data, headers)
-        return self.last_message
+        result_dict = self.last_message
+        if not search_options.get('offset'):
+            result_dict['results'] = self._result_generator(result_dict['count'], result_dict['results'], self.package_search, q, search_options)
+        return result_dict
 
+    def _result_generator(self, count, results, func, q, search_options):
+        '''Returns a generator that will make the necessary calls to page
+        through results.'''
+        page = 0
+        num_pages = int(count / search_options['limit'] + 0.9999)
+        while True:
+            for res in results:
+                yield res
+
+            # go to next page?
+            page += 1
+            if page >= num_pages:
+                break
+
+            # retrieve next page
+            search_options['offset'] = page * search_options['limit']
+            result_dict = func(q, search_options)
+            results = result_dict['results']
+            
     #
     # Form API
     #
