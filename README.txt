@@ -1,4 +1,4 @@
-ckanclient makes is a Python module to read and write to a CKAN server 
+ckanclient is a Python module to read and write to a CKAN server
 via the API.
 
 Usage
@@ -22,8 +22,9 @@ or you can get the latest repository using Mercurial::
 Tests
 =====
 
-The ckanclient tests require the ckan and nose modules installed.
+The ckanclient tests require the ckan and nose modules installed. Optionally 
+ckanext-dgu can be installed too and the form api will be tested.
 
-To run the ckanclient tests::
+To run the tests::
 
-    nosetests ckanclient/tests
+    nosetests --ckan ckanclient/tests
