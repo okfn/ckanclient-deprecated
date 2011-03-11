@@ -1,6 +1,6 @@
 from optparse import OptionParser
 from gdata.spreadsheet.service import SpreadsheetsService as GoogleSpreadsheetsService
-from ckanclient import CkanClient
+from ckanclient import CkanClient, CkanApiError
 from time import sleep
 import string
 import pprint
@@ -118,7 +118,10 @@ class CkanLoader(object):
         print ""
         sleep(1)
         for package in self.packages:
-            registered_package = self.ckanclient.package_entity_get(package['name'])
+            try:
+                registered_package = self.ckanclient.package_entity_get(package['name'])
+            except CkanApiError:
+                pass
             if self.ckanclient.last_status == 200:
                 print "Package '%s' is already registered" % package['name']
                 print ""
