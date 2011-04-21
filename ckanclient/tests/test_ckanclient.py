@@ -264,7 +264,7 @@ class TestCkanClient(CkanServerCase):
         # create relationship
         res = self.c.package_relationship_entity_post('annakarenina', 'child_of', 'warandpeace', 'some comment')
         try:
-            assert self.c.last_status == 200, self.c.last_status
+            assert self.c.last_status == 201, self.c.last_status
         finally:
             self.delete_relationships()
         
