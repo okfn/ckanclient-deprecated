@@ -172,7 +172,7 @@ class CkanLoader(object):
                         continue
                 print "Registering package..."
                 self.ckanclient.package_register_post(package)
-                if self.ckanclient.last_status == 200:
+                if self.ckanclient.last_status in [200, 201]:
                     print "Registered package '%s' OK." % package['name']
                     sleep(1)
                 elif self.ckanclient.last_status == 403 or '403' in str(self.ckanclient.last_url_error):
