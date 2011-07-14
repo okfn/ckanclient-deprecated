@@ -1,4 +1,4 @@
-__version__ = '0.7'
+__version__ = '0.8'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
 '''The CKAN client software may be used to make requests on the Comprehensive
@@ -72,7 +72,13 @@ The simplest way to make CKAN requests is:
 Changelog
 =========
 
-v0.7 2010-01-27
+v0.8 2011-XX-XX
+---------------
+
+  * More detailed exceptions added
+
+
+v0.7 2011-01-27
 ---------------
 
   * Package search returns results as a generator
@@ -131,8 +137,10 @@ import logging
 logger = logging.getLogger('ckanclient')
 
 
-class CkanApiError(Exception):
-    pass
+class CkanApiError(Exception): pass
+class CkanApiNotFoundError(CkanApiError): pass
+class CkanApiNotAuthorizedError(CkanApiError): pass
+class CkanApiConflictError(CkanApiError): pass
 
 class Request(urllib2.Request):
     def __init__(self, url, data=None, headers={}, method=None):
@@ -303,7 +311,14 @@ class CkanClient(ApiClient):
     def open_url(self, url, *args, **kwargs):
         result = super(CkanClient, self).open_url(url, *args, **kwargs)
         if self.last_status not in (200, 201):
-            raise CkanApiError(self.last_message)
+            if self.last_status == 404:
+                raise CkanApiNotFoundError(self.last_status)
+            elif self.last_status == 403:
+                raise CkanApiNotAuthorizedError(self.last_status)
+            elif self.last_status == 409:
+                raise CkanApiConflictError(self.last_status)
+            else:
+                raise CkanApiError(self.last_message)
         return result
             
     def api_version_get(self):
