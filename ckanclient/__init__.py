@@ -72,7 +72,7 @@ The simplest way to make CKAN requests is:
 Changelog
 =========
 
-v0.8 2011-XX-XX
+v0.8 2011-07-20
 ---------------
 
   * More detailed exceptions added
