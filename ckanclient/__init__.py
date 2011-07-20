@@ -76,7 +76,8 @@ v0.8 2011-XX-XX
 ---------------
 
   * More detailed exceptions added
-
+  * Some Python 3 compatibility
+  
 
 v0.7 2011-01-27
 ---------------
@@ -130,11 +131,35 @@ v0.1 2008-04
 
 __license__ = 'MIT'
 
-PAGE_SIZE = 10
+import os
+import re
 
-import os, urllib, urllib2, re
+try:
+    str = unicode
+    from urllib2 import (urlopen, build_opener, install_opener,
+                         HTTPBasicAuthHandler,
+                         HTTPPasswordMgrWithDefaultRealm,
+                         Request,
+                         HTTPError, URLError)
+    from urllib import urlencode
+except NameError:
+    # Forward compatibility with Py3k
+    from urllib.error import HTTPError, URLError
+    from urllib.parse import urlencode
+    from urllib.request import (build_opener, install_opener, urlopen,
+                                HTTPPasswordMgrWithDefaultRealm,
+                                HTTPBasicAuthHandler,
+                                Request)
+
+try: # since python 2.6
+    import json
+except ImportError:
+    import simplejson as json
+
 import logging
 logger = logging.getLogger('ckanclient')
+
+PAGE_SIZE = 10
 
 
 class CkanApiError(Exception): pass
@@ -142,9 +167,9 @@ class CkanApiNotFoundError(CkanApiError): pass
 class CkanApiNotAuthorizedError(CkanApiError): pass
 class CkanApiConflictError(CkanApiError): pass
 
-class Request(urllib2.Request):
+class ApiRequest(Request):
     def __init__(self, url, data=None, headers={}, method=None):
-        urllib2.Request.__init__(self, url, data, headers)
+        Request.__init__(self, url, data, headers)
         self._method = method
         
     def get_method(self):
@@ -177,10 +202,10 @@ class ApiClient(object):
         self.last_location = location
         try:
             if data != None:
-                data = urllib.urlencode({data: 1})
-            req = Request(location, data, headers, method=method)
-            self.url_response = urllib2.urlopen(req)
-        except urllib2.HTTPError, inst:
+                data = urlencode({data: 1})
+            req = ApiRequest(location, data, headers, method=method)
+            self.url_response = urlopen(req)
+        except HTTPError, inst:
             self._print("ckanclient: Received HTTP error code from CKAN resource.")
             self._print("ckanclient: location: %s" % location)
             self._print("ckanclient: response code: %s" % inst.fp.code)
@@ -190,7 +215,7 @@ class ApiClient(object):
             self.last_http_error = inst
             self.last_status = inst.code
             self.last_message = inst.read()
-        except urllib2.URLError, inst:
+        except URLError, inst:
             self._print("ckanclient: Unable to progress with URL.")
             self._print("ckanclient: location: %s" % location)
             self._print("ckanclient: request headers: %s" % headers)
@@ -295,12 +320,12 @@ class CkanClient(ApiClient):
         self.api_key = api_key
         self.is_verbose = is_verbose
         if http_user and http_pass:
-            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_mgr = HTTPPasswordMgrWithDefaultRealm()
             password_mgr.add_password(None, base_location,
                                       http_user, http_pass)
-            handler = urllib2.HTTPBasicAuthHandler(password_mgr)
-            opener = urllib2.build_opener(handler)
-            urllib2.install_opener(opener)
+            handler = HTTPBasicAuthHandler(password_mgr)
+            opener = build_opener(handler)
+            install_opener(opener)
 
     def _auth_headers(self):
         return {
