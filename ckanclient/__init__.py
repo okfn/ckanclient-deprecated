@@ -258,17 +258,9 @@ class ApiClient(object):
         return base + path
 
     def _dumpstr(self, data):
-        try: # since python 2.6
-            import json
-        except ImportError:
-            import simplejson as json
         return json.dumps(data)
     
     def _loadstr(self, string):
-        try: # since python 2.6
-            import json
-        except ImportError:
-            import simplejson as json
         try:
             if string == '':
                 data = None
