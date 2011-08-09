@@ -72,6 +72,13 @@ The simplest way to make CKAN requests is:
 Changelog
 =========
 
+v0.9 2011-XX-XX
+---------------
+
+  * Default URL changed to thedatahub.org
+  * Guard against 301 redirection, which loses POST contents
+
+
 v0.8 2011-07-20
 ---------------
 
@@ -161,11 +168,11 @@ logger = logging.getLogger('ckanclient')
 
 PAGE_SIZE = 10
 
-
 class CkanApiError(Exception): pass
 class CkanApiNotFoundError(CkanApiError): pass
 class CkanApiNotAuthorizedError(CkanApiError): pass
 class CkanApiConflictError(CkanApiError): pass
+
 
 class ApiRequest(Request):
     def __init__(self, url, data=None, headers={}, method=None):
@@ -205,6 +212,9 @@ class ApiClient(object):
                 data = urlencode({data: 1})
             req = ApiRequest(location, data, headers, method=method)
             self.url_response = urlopen(req)
+            if data and self.url_response.geturl() != location:
+                redirection = '%s -> %s' % (location, self.url_response.geturl())
+                raise URLError("Got redirected to another URL, which does not work with POSTS. Redirection: %s" % redirection)
         except HTTPError, inst:
             self._print("ckanclient: Received HTTP error code from CKAN resource.")
             self._print("ckanclient: location: %s" % location)
@@ -283,13 +293,13 @@ class CkanClient(ApiClient):
     """
     Client API implementation for CKAN.
 
-    :param base_location: default *http://www.ckan.net/api*
+    :param base_location: default *http://thedatahub.org/api*
     :param api_key: default *None*
     :param is_verbose: default *False*
     :param http_user: default *None*
     :param http_pass: default *None*
     """
-    base_location = 'http://www.ckan.net/api'
+    base_location = 'http://thedatahub.org/api'
     resource_paths = {
         'Base': '',
         'Changeset Register': '/rest/changeset',
