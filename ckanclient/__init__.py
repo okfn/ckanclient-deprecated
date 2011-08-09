@@ -1,4 +1,4 @@
-__version__ = '0.8'
+__version__ = '0.9'
 __description__ = 'The CKAN client Python package.'
 __long_description__ = \
 '''The CKAN client software may be used to make requests on the Comprehensive
@@ -72,7 +72,7 @@ The simplest way to make CKAN requests is:
 Changelog
 =========
 
-v0.9 2011-XX-XX
+v0.9 2011-08-09
 ---------------
 
   * Default URL changed to thedatahub.org
