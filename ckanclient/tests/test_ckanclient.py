@@ -256,6 +256,21 @@ class TestCkanClient(CkanServerCase):
         assert set(all_results) >= set([u'annakarenina', u'warandpeace']), all_results
         assert res['count'] >= 2, '%r %r' % (res, all_results)
 
+    def test_10_pkg_search_options(self):
+        res = self.c.package_search(None, search_options={'groups': 'roger'})
+        status = self.c.last_status
+        assert status == 200, status
+        assert_equal(list(res['results']), [u'annakarenina'])
+        assert_equal(res['count'], 1)
+
+    def test_10_pkg_search_options_all_fields(self):
+        res = self.c.package_search(None, search_options={'groups': 'roger',
+                                                          'all_fields': True})
+        status = self.c.last_status
+        assert status == 200, status
+        assert_equal(list(res['results']), [u'annakarenina'])
+        assert_equal(res['count'], 1)
+
     def test_11_package_relationship_post(self):
         res = self.c.package_relationship_register_get('annakarenina')
         assert self.c.last_status == 200, self.c.last_status
