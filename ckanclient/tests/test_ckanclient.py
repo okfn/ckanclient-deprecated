@@ -268,8 +268,8 @@ class TestCkanClient(CkanServerCase):
                                                           'all_fields': True})
         status = self.c.last_status
         assert status == 200, status
-        assert_equal(list(res['results']), [u'annakarenina'])
         assert_equal(res['count'], 1)
+        assert_equal(list(res['results'])[0]['name'], u'annakarenina')
 
     def test_11_package_relationship_post(self):
         res = self.c.package_relationship_register_get('annakarenina')
