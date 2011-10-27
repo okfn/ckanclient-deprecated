@@ -161,7 +161,13 @@ except NameError:
 try: # since python 2.6
     import json
 except ImportError:
-    import simplejson as json
+    try:
+        import simplejson as json
+    except ImportError:
+        class _json(object):
+            def __getattr__(self, name):
+                import simplejson as json
+        json = _json()
 
 import logging
 logger = logging.getLogger('ckanclient')
