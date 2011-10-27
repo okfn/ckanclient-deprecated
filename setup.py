@@ -5,7 +5,7 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-from ckanclient.meta import __version__, __description__, __long_description__, __license__
+from ckanclient import __version__, __description__, __long_description__, __license__
 
 import os
 
