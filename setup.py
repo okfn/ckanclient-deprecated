@@ -9,6 +9,14 @@ from ckanclient import __version__, __description__, __long_description__, __lic
 
 import os
 
+install_requires = []
+try:
+    __import__('json')
+except ImportError:
+    # The json module isn't available in the standard library until 2.6;
+    # use simplejson instead,
+    install_requires.append('simplejson')
+
 setup(
     name='ckanclient',
     version=__version__,
@@ -19,10 +27,7 @@ setup(
     description=__description__,
     keywords='data packaging component tool client',
     long_description =__long_description__,
-    install_requires=[
-        # only required if python <= 2.5 (as json library in python >= 2.6)
-        # 'simplejson',
-    ],
+    install_requires=install_requires,
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
     always_unzip=True,
