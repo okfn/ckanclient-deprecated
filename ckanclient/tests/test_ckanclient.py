@@ -359,3 +359,17 @@ class TestCkanClient(CkanServerCase):
         assert set(david['packages']) == set((u'annakarenina', u'warandpeace')), david
         roger = self.c.group_entity_get('roger')
         assert roger['packages'] == [u'annakarenina'], roger
+
+    def test_17_package_list(self):
+        res = self.c.package_list()
+        status = self.c.last_status
+        assert status == 200
+        assert_equal(res, self.c.last_result)
+        message = self.c.last_message
+        assert set(message.keys()) >= set(('help', 'success', 'result')), message
+        assert 'annakarenina' in res, res
+
+    def test_18_ckan_version(self):
+        res = self.c.ckan_version()
+        assert res[0] in '12345'
+        

@@ -13,7 +13,9 @@ The simplest way to make CKAN requests is:
     import ckanclient
 
     # Instantiate the CKAN client.
-    ckan = ckanclient.CkanClient(api_key=my_key)
+    ckan = ckanclient.CkanClient(base_location='http://thedatahub.org/api',
+                                 api_key='adbc-1c0d')
+    # (use your own api_key from http://thedatahub.org/user/me )
     
     # Get the package list.
     package_list = ckan.package_register_get()
@@ -71,6 +73,12 @@ The simplest way to make CKAN requests is:
 
 Changelog
 =========
+
+vXX
+---------------
+
+  * Action API functions
+
 
 v0.9 2011-08-09
 ---------------
@@ -172,6 +180,7 @@ class CkanApiError(Exception): pass
 class CkanApiNotFoundError(CkanApiError): pass
 class CkanApiNotAuthorizedError(CkanApiError): pass
 class CkanApiConflictError(CkanApiError): pass
+class CkanApiActionError(Exception): pass
 
 
 class ApiRequest(Request):
@@ -202,6 +211,9 @@ class ApiClient(object):
         self.last_message = None
         self.last_http_error = None
         self.last_url_error = None
+        self.last_help = None # Action API only
+        self.last_result = None # Action API only
+        self.last_ckan_error = None # Action API only
 
     def open_url(self, location, data=None, headers={}, method=None):
         if self.is_verbose:
@@ -266,6 +278,9 @@ class ApiClient(object):
                 if entity2_id != None:
                     path += '/' + entity2_id            
         return base + path
+
+    def get_action_location(self, action_name):
+        return '%s/action/%s' % (self.base_location, action_name)
 
     def _dumpstr(self, data):
         return json.dumps(data)
@@ -348,6 +363,26 @@ class CkanClient(ApiClient):
                 raise CkanApiError(self.last_message)
         return result
             
+    def open_action_url(self, url, data_dict):
+        data_json = self._dumpstr(data_dict)
+        result = super(CkanClient, self).open_url(url, data=data_json)
+        if self.last_status not in (200, 201):
+            if self.last_status == 404:
+                raise CkanApiNotFoundError(self.last_status)
+            elif self.last_status == 403:
+                raise CkanApiNotAuthorizedError(self.last_status)
+            elif self.last_status == 409:
+                raise CkanApiConflictError(self.last_status)
+            else:
+                raise CkanApiError(self.last_message)
+        self.last_help = self.last_message['help']
+        if self.last_message['success']:
+            self.last_result = self.last_message['result']
+        else:
+            self.last_ckan_error = self.last_message['error']
+            raise CkanApiActionError(self.last_ckan_error)
+        return self.last_result
+
     def api_version_get(self):
         self.reset()
         url = self.get_location('Base')
@@ -614,9 +649,33 @@ class CkanClient(ApiClient):
         payload = self._dumpstr(headers)
         self.open_url(url, payload, method="POST")
         return self._loadstr(self.last_message)
+
+    #
+    # Action API
+    #
+
+    # for any action
+    def action(self, action_name, **kwargs):
+        self.reset()
+        url = self.get_action_location(action_name)
+        self.open_action_url(url, kwargs)
+        return self.last_result
+
+    def package_list(self):
+        return self.action('package_list')
+        
+    def package_show(self, package_id):
+        return self.action('package_show', id=package_id)
+
+    def status_show(self):
+        return self.action('status_show')
+
+    def ckan_version(self):
+        return self.action('status_show')['ckan_version']
+
     
     #
-    # Utils
+    # CkanClient utils
     #
     def is_id(self, id_string):
         '''Tells the client if the string looks like an id or not'''
