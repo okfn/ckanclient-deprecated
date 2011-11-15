@@ -78,6 +78,8 @@ vXX
 ---------------
 
   * Action API functions
+  * GET methods now send API key too
+  * Removed changeset functions
 
 
 v0.9 2011-08-09
@@ -404,7 +406,8 @@ class CkanClient(ApiClient):
     def package_register_get(self):
         self.reset()
         url = self.get_location('Package Register')
-        self.open_url(url)
+        headers = self._auth_headers()
+        self.open_url(url, headers=headers)
         return self.last_message
 
     def package_register_post(self, package_dict):
@@ -491,13 +494,15 @@ class CkanClient(ApiClient):
     def tag_register_get(self):
         self.reset()
         url = self.get_location('Tag Register')
-        self.open_url(url)
+        headers = self._auth_headers()
+        self.open_url(url, headers=headers)
         return self.last_message
 
     def tag_entity_get(self, tag_name):
         self.reset()
         url = self.get_location('Tag Entity', tag_name)
-        self.open_url(url)
+        headers = self._auth_headers()
+        self.open_url(url, headers=headers)
         return self.last_message
 
     def group_register_post(self, group_dict):
@@ -511,13 +516,15 @@ class CkanClient(ApiClient):
     def group_register_get(self):
         self.reset()
         url = self.get_location('Group Register')
-        self.open_url(url)
+        headers = self._auth_headers()
+        self.open_url(url, headers=headers)
         return self.last_message
 
     def group_entity_get(self, group_name):
         self.reset()
         url = self.get_location('Group Entity', group_name)
-        self.open_url(url)
+        headers = self._auth_headers()
+        self.open_url(url, headers=headers)
         return self.last_message
 
     def group_entity_put(self, group_dict, group_name=None):
@@ -577,7 +584,8 @@ class CkanClient(ApiClient):
     def package_create_form_get(self):
         self.reset()
         url = self.get_location('Package Create Form')
-        self.open_url(url)
+        headers = self._auth_headers()        
+        self.open_url(url, headers=headers)
         return self.last_message
 
     def package_create_form_post(self, form_submission):
@@ -591,7 +599,8 @@ class CkanClient(ApiClient):
     def package_edit_form_get(self, package_ref):
         self.reset()
         url = self.get_location('Package Edit Form', package_ref)
-        self.open_url(url)
+        headers = self._auth_headers()
+        self.open_url(url, headers=headers)
         return self.last_message
 
     def package_edit_form_post(self, package_ref, form_submission):
@@ -600,22 +609,6 @@ class CkanClient(ApiClient):
         data = self._dumpstr(form_submission)
         headers = self._auth_headers()
         self.open_url(url, data, headers)
-        return self.last_message
-
-    #
-    # Changeset API
-    #
-    
-    def changeset_register_get(self):
-        self.reset()
-        url = self.get_location('Changeset Register')
-        self.open_url(url)
-        return self.last_message
-
-    def changeset_entity_get(self, changeset_name):
-        self.reset()
-        url = self.get_location('Changeset Entity', changeset_name)
-        self.open_url(url)
         return self.last_message
 
     #
@@ -630,17 +623,20 @@ class CkanClient(ApiClient):
         return url
     def storage_metadata_get(self, path):
         url = self._storage_metadata_url(path)
-        self.open_url(url)
+        headers = self._auth_headers()
+        self.open_url(url, headers=headers)
         return self._loadstr(self.last_message)
     def storage_metadata_set(self, path, metadata):
         url = self._storage_metadata_url(path)
         payload = self._dumpstr(metadata)
-        self.open_url(url, payload, method="PUT")
+        headers = self._auth_headers()
+        self.open_url(url, payload, headers=headers, method="PUT")
         return self._loadstr(self.last_message)
     def storage_metadata_update(self, path, metadata):
         url = self._storage_metadata_url(path)
         payload = self._dumpstr(metadata)
-        self.open_url(url, payload, method="POST")
+        headers = self._auth_headers()
+        self.open_url(url, payload, headers=headers, method="POST")
         return self._loadstr(self.last_message)
 
     def _storage_auth_url(self, path):
@@ -653,7 +649,8 @@ class CkanClient(ApiClient):
     def storage_auth_get(self, path, headers):
         url = self._storage_auth_url(path)
         payload = self._dumpstr(headers)
-        self.open_url(url, payload, method="POST")
+        headers = self._auth_headers()
+        self.open_url(url, payload, headers=headers, method="POST")
         return self._loadstr(self.last_message)
 
     #
