@@ -1,5 +1,4 @@
-syntax: glob
-
 *.pyc
 ckanclient.egg-info/*
 dist/*
+.*.swp

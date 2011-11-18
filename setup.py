@@ -20,7 +20,7 @@ except ImportError:
 setup(
     name='ckanclient',
     version=__version__,
-    author='Appropriate Software Foundation, Open Knowledge Foundation',
+    author='Open Knowledge Foundation',
     author_email='info@okfn.org',
     license=__license__,
     url='http://www.okfn.org/ckan/',
