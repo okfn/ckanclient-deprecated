@@ -1,0 +1,22 @@
+Source: ckanclient
+Section: python
+Priority: optional
+Maintainer: J. Félix Ontañón <fontanon@emergya.es>
+Build-Depends: 
+ debhelper (>= 7), 
+ python-all-dev, 
+ python-support, 
+ python-setuptools
+Standards-Version: 3.9.2
+Homepage: http://thedatahub.org/dataset/ckanclient
+Vcs-Git: http://github.com/okfn/ckanclient
+
+Package: python-ckanclient
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, 
+ python-simplejson, python-gdata
+Suggests: python-nose
+Description: CKAN client Python package
+ The CKAN client software may be used to make requests on the Comprehensive 
+ Knowledge Archive Network (CKAN) API including its REST interface to all 
+ primary objects (packages, groups, tags) and its search interface.
