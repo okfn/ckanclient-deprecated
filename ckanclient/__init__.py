@@ -625,19 +625,19 @@ class CkanClient(ApiClient):
         url = self._storage_metadata_url(path)
         headers = self._auth_headers()
         self.open_url(url, headers=headers)
-        return self._loadstr(self.last_message)
+        return self.last_message
     def storage_metadata_set(self, path, metadata):
         url = self._storage_metadata_url(path)
         payload = self._dumpstr(metadata)
         headers = self._auth_headers()
         self.open_url(url, payload, headers=headers, method="PUT")
-        return self._loadstr(self.last_message)
+        return self.last_message
     def storage_metadata_update(self, path, metadata):
         url = self._storage_metadata_url(path)
         payload = self._dumpstr(metadata)
         headers = self._auth_headers()
         self.open_url(url, payload, headers=headers, method="POST")
-        return self._loadstr(self.last_message)
+        return self.last_message
 
     def _storage_auth_url(self, path):
         url = self.base_location
@@ -650,8 +650,8 @@ class CkanClient(ApiClient):
         url = self._storage_auth_url(path)
         payload = self._dumpstr(headers)
         headers = self._auth_headers()
-        self.open_url(url, payload, headers=headers, method="POST")
-        return self._loadstr(self.last_message)
+        self.open_url(url, payload, headers=headers, method="POST")       
+        return self.last_message
 
     #
     # Action API
