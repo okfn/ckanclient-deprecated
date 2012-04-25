@@ -16,7 +16,7 @@ You can download releases of ckanclient from PyPI::
 
 or you can get the latest repository using Mercurial::
 
-    hg clone https://knowledgeforge.net/ckan/ckanclient
+    git clone https://github.com/okfn/ckanclient.git
 
 
 Tests
