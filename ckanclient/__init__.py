@@ -615,7 +615,7 @@ class CkanClient(ApiClient):
         return self.last_message
 
     #
-    # data API
+    # Storage API
     #
     def _storage_metadata_url(self, path):
         url = self.base_location
@@ -624,36 +624,50 @@ class CkanClient(ApiClient):
         if not path.startswith("/"): url += "/"
         url += path
         return url
-    def storage_metadata_get(self, path):
-        url = self._storage_metadata_url(path)
+
+    def storage_metadata_get(self, label):
+        '''Get the JSON metadata for a file that has been uploaded to CKAN's
+        FileStore.
+
+        :param label: The 'label' that identifies the file in CKAN's
+        filestore. When you upload a file to the FileStore a path is
+        generated for it, e.g. /storage/f/2012-04-27T092841/myfile.jpg. The
+        label is just the last part of this path, e.g.
+        2012-04-27T092841/myfile.jpg
+
+        '''
+        url = self._storage_metadata_url(label)
         headers = self._auth_headers()
         self.open_url(url, headers=headers)
         return self.last_message
-    def storage_metadata_set(self, path, metadata):
-        url = self._storage_metadata_url(path)
+
+    def storage_metadata_set(self, label, metadata):
+        url = self._storage_metadata_url(label)
         payload = self._dumpstr(metadata)
         headers = self._auth_headers()
         self.open_url(url, payload, headers=headers, method="PUT")
         return self.last_message
-    def storage_metadata_update(self, path, metadata):
-        url = self._storage_metadata_url(path)
+
+    def storage_metadata_update(self, label, metadata):
+        url = self._storage_metadata_url(label)
         payload = self._dumpstr(metadata)
         headers = self._auth_headers()
         self.open_url(url, payload, headers=headers, method="POST")
         return self.last_message
 
-    def _storage_auth_url(self, path):
+    def _storage_auth_url(self, label):
         url = self.base_location
         if not url.endswith("/"): url += "/"
         url += "storage/auth"
-        if not path.startswith("/"): url += "/"
-        url += path
+        if not label.startswith("/"): url += "/"
+        url += label
         return url
-    def storage_auth_get(self, path, headers):
-        url = self._storage_auth_url(path)
+
+    def storage_auth_get(self, label, headers):
+        url = self._storage_auth_url(label)
         payload = self._dumpstr(headers)
         headers = self._auth_headers()
-        self.open_url(url, payload, headers=headers, method="POST")       
+        self.open_url(url, payload, headers=headers, method="POST")
         return self.last_message
 
     #
