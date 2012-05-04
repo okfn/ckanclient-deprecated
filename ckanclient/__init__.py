@@ -821,7 +821,7 @@ class CkanClient(ApiClient):
             url = file_path_or_url
 
         if file_path:
-            m = hashlib.md5(open(file_path).read())
+            m = hashlib.sha1(open(file_path).read())
             url, msg = self.upload_file(file_path)
             urlp = urlparse.urlparse(url)
 
