@@ -316,15 +316,15 @@ class ApiClient(object):
 
 
 class CkanClient(ApiClient):
-    """
-    Client API implementation for CKAN.
+    '''Client API implementation for CKAN.
 
     :param base_location: default *http://thedatahub.org/api*
     :param api_key: default *None*
     :param is_verbose: default *False*
     :param http_user: default *None*
     :param http_pass: default *None*
-    """
+
+    '''
     base_location = 'http://thedatahub.org/api'
     resource_paths = {
         'Base': '',
@@ -696,18 +696,23 @@ class CkanClient(ApiClient):
     #
     # Private Helpers
     #
-    def _post_multipart(self, host, selector, fields, files):
-        """
-        Post fields and files to an http host as multipart/form-data.
-        fields is a sequence of (name, value) elements for regular form fields.
-        files is a sequence of (name, filename, value) elements for data to be uploaded as files
-        Return the server's response page.
+    def _post_multipart(self, selector, fields, files):
+        '''Post fields and files to an http host as multipart/form-data.
 
-        Taken from http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
-        """
+        Taken from
+        http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
+
+        :param fields: a sequence of (name, value) tuples for regular form
+            fields
+        :param files: a sequence of (name, filename, value) tuples for data to
+            be uploaded as files
+
+        :returns: the server's response page
+
+        '''
         content_type, body = self._encode_multipart_formdata(fields, files)
 
-        h = httplib.HTTP(host)
+        h = httplib.HTTP(urlparse.urlparse(self.base_location).netloc)
         h.putrequest('POST', selector)
         h.putheader('content-type', content_type)
         h.putheader('content-length', str(len(body)))
@@ -717,13 +722,19 @@ class CkanClient(ApiClient):
         return errcode, errmsg, headers, h.file.read()
 
     def _encode_multipart_formdata(self, fields, files):
-        """
-        fields is a sequence of (name, value) elements for regular form fields.
-        files is a sequence of (name, filename, value) elements for data to be uploaded as files
-        Return (content_type, body) ready for httplib.HTTP instance
+        '''Encode fields and files to be posted as multipart/form-data.
 
-        Taken from http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
-        """
+        Taken from
+        http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
+
+        :param fields: a sequence of (name, value) tuples for the regular
+            form fields to be encoded
+        :param files: a sequence of (name, filename, value) tuples for the data
+            to be uploaded as files
+
+        :returns: (content_type, body) ready for httplib.HTTP instance
+
+        '''
         BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
         CRLF = '\r\n'
         L = []
@@ -755,33 +766,38 @@ class CkanClient(ApiClient):
         return bool(re.match('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', id_string))
 
     def upload_file (self, file_path):
-        """ Upload a file via the filestore api to a CKAN instance. 
-        
+        '''Upload a file to a CKAN instance via CKAN's FileStore API.
+
+        The CKAN instance must have file storage enabled.
+
         A timestamped directory is created on the server to store the file as
         if it had been uploaded via the graphical interface. On success, the
-        url of the file is returned along with an empty error message. On failure,
-        the url is an empty string.
+        URL of the file is returned along with an empty error message. On
+        failure, the URL is an empty string.
 
-        Arguments:
-        client: a ckan client instance.
-        file_path: location of the file on the local filesystem.
+        :param file_path: path to the file to upload, on the local filesystem
+        :type file_path: string
 
-        Return:
-        url: url of the file on the ckan server.
-        errmsg: error message from the server.
-        """
+        :returns: a (url, errmsg) 2-tuple containing the URL of the
+            successufully uploaded file on the CKAN server (string, an empty
+            string if the upload failed) and any error message from the server
+            (string, an empty string if there was no error)
+        :rtype: (string, string) 2-tuple
+
+        '''
         # see ckan/public/application.js:makeUploadKey for why the file_key
         # is derived this way.
         ts = datetime.isoformat(datetime.now()).replace(':','').split('.')[0]
-        norm_name  = os.path.basename(file_path).replace(' ', '-')    
+        norm_name  = os.path.basename(file_path).replace(' ', '-')
         file_key = os.path.join(ts, norm_name)
 
         auth_dict = self.storage_auth_get('/form/'+file_key, {})
-        
+
         u = urlparse.urlparse(auth_dict['action'])
         fields = [('key', file_key)]
         files  = [('file', os.path.basename(file_key), open(file_path).read())]
-        errcode, errmsg, headers, body = self._post_multipart(u.hostname, u.path, fields, files)
+        errcode, errmsg, headers, body = self._post_multipart(u.path, fields,
+                files)
 
         if errcode == 200:
             return 'http://%s/storage/f/%s' % (u.netloc, file_key), ''
@@ -789,29 +805,33 @@ class CkanClient(ApiClient):
             return '', errmsg
 
     def add_package_resource (self, package_name, file_path_or_url, **kwargs):
-        """ Add file or url as a resource to a package.
+        '''Add a file or URL to a dataset (package) as a resource.
 
-        If the resource is a local file, it will be uploaded to the ckan server first.
-        A dictionary representing the resource is constructed.
-        The package entity is fetched from the server and the dictionary
-        is appended to the list of resources. The modified package entity is put
-        back on the server.
+        If the resource is a local file then the CKAN instance must have file
+        storage enabled. The file will be uploaded to the CKAN server.
 
-        Arguments:
-        client: a ckan client instancer
-        package_name: name of the package/dataset
-        file_path_or_url: path of a local file or a http url.
-        kwargs: optional keyword arguments are added to the resource dictionary verbatim.
-
-        Return:
-        package_entity: the package entity dictionary as return by the server.
-
+        A dictionary representing the resource is constructed. The package is
+        fetched from the server and the dictionary is appended to the package's
+        list of resources. The modified package is put back on the server.
         examples:
 
-        >>> client.add_package_resource('mypkg', '/path/to/local/file', resource_type='data', description='...')
-        >>> client.add_package_resource('mypkg', 'http://example.org/foo.txt', name='Foo', resource_type='metadata', format='csv')
+        >>> client.add_package_resource('mypkg', '/path/to/local/file',
+                resource_type='data', description='...')
+        >>> client.add_package_resource('mypkg', 'http://example.org/foo.txt',
+                name='Foo', resource_type='metadata', format='csv')
 
-        """
+        :param package_name: the name of the dataset (package) to upload to
+        :type package_name: string
+        :param file_path_or_url: local filesystem path or URL of the file to
+            add
+        :type file_path_or_url: string
+        :param kwargs: arbitrary keyword arguments to add to the resource
+            dictionary verbatim (optional)
+
+        :returns: the modified dataset dictionary as returned by the server
+        :rtype: dataset dictionary
+
+        '''
         file_path, url = '', ''
 
         try:
@@ -831,8 +851,9 @@ class CkanClient(ApiClient):
             else:
                 norm_name = server_path.strip('/')
 
-            r = dict(name=norm_name, mimetype=self._get_content_type(file_path), hash=m.hexdigest(),
-                    size=st.st_size, url=server_path)
+            r = dict(name=norm_name,
+                    mimetype=self._get_content_type(file_path),
+                    hash=m.hexdigest(), size=st.st_size, url=server_path)
         else:
             r = dict(url=url)
 
@@ -842,4 +863,3 @@ class CkanClient(ApiClient):
         p = self.package_entity_get(package_name)
         p['resources'].append(r)
         return self.package_entity_put(p)
-
