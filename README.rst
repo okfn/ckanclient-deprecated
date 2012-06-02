@@ -1,14 +1,66 @@
-ckanclient is a Python module to read and write to a CKAN server
-via the API.
+ckanclient is a Python library and command-line client to read and write to a
+CKAN instance via the API. It covers both the Catalog and `Data API`_
+(accessing the `CKAN DataStore`_).
+
+.. _Data API: http://docs.ckan.org/en/latest/using-data-api.html
+.. _CKAN DataStore: http://docs.ckan.org/en/latest/datastore.html
 
 Usage
 =====
 
-To see how to use the ckanclient, see the docs in `__init__.py`
+Catalog API
+-----------
+
+For usage of the ckanclient for the Catalog API, see the docs in `__init__.py`
+
+DataStore and Data API
+----------------------
+
+Command Line Usage
+``````````````````
+
+For command line usage do::
+
+    ./ckanclient/datastore.py -h
+
+Client Usage
+````````````
+
+Example:
+
+  >>> import ckanclient.datastore
+  >>> data_api = 'http://thedatahub.org/api/data/fffc6388-01bc-44c4-ba0d-b860d93e6c7c'
+  >>> client = ckanclient.datastore.DataStoreClient(data_api)
+  >>> client.update(...)
 
 
-Retrieval
-=========
+API Keys
+--------
+
+Many operations will need your API key. This can either be set as part of the
+url when conducting an operation, e.g.::
+
+  http://{your-api-key}@thedatahub.org/api/data/fffc6388-01bc-44c4-ba0d-b860d93e6c7c'
+
+Or you can set this in a section of your .dpmrc file in your home (~/)
+directory::
+
+  [index:{hostname}]
+  api_key = {your-api-key}
+
+For example::
+
+  [index:thedatahub.org]
+  api_key = adfakjfafdkjda
+
+  [index:localhost]
+  api_key = tester
+
+
+
+
+Install
+=======
 
 You can download releases of ckanclient from PyPI:
 
