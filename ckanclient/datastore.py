@@ -160,7 +160,7 @@ class DataStoreClient:
             self._headers['Authorization'] = self.authorization
 
     def _get_api_key_from_config(self):
-        config_path = os.path.join(os.path.expanduser('~'), '.dpmrc')
+        config_path = os.path.join(os.path.expanduser('~'), '.ckanclientrc')
         if os.path.exists(config_path):
             cfgparser = ConfigParser.SafeConfigParser()
             cfgparser.readfp(open(config_path))

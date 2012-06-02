@@ -42,7 +42,7 @@ url when conducting an operation, e.g.::
 
   http://{your-api-key}@thedatahub.org/api/data/fffc6388-01bc-44c4-ba0d-b860d93e6c7c'
 
-Or you can set this in a section of your .dpmrc file in your home (~/)
+Or you can set this in a section of your .ckanclientrc file in your home (~/)
 directory::
 
   [index:{hostname}]
