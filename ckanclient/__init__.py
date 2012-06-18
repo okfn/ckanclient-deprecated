@@ -1,4 +1,4 @@
-__version__ = '0.9'
+__version__ = '0.10'
 __description__ = 'Python client for the CKAN API.'
 __license__ = 'MIT'
 
