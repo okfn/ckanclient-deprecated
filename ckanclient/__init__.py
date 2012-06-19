@@ -1,5 +1,10 @@
 __version__ = '0.9'
 __description__ = 'Python client for the CKAN API.'
+__long_description__ = \
+'''The CKAN client software may be used to make requests on the Comprehensive
+Knowledge Archive Network (CKAN) API including its REST interface to all
+primary objects (packages, groups, tags) and its search interface.
+'''
 __license__ = 'MIT'
 
 import os
