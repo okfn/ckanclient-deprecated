@@ -23,7 +23,7 @@ setup(
     author='Open Knowledge Foundation',
     author_email='info@okfn.org',
     license=__license__,
-    url='http://www.okfn.org/ckan/',
+    url='https://github.com/okfn/ckanclient',
     description=__description__,
     keywords='data packaging component tool client',
     long_description =__long_description__,
