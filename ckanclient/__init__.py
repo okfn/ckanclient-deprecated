@@ -128,7 +128,10 @@ class CkanClient(object):
         if headers is None:
             headers = {}
         # automatically add auth headers into every request
-        _headers = self._auth_headers()
+        _headers = {
+            'Authorization': self.api_key,
+            'X-CKAN-API-Key': self.api_key
+        }
         _headers.update(headers)
         self.last_location = location
         try:
@@ -188,12 +191,6 @@ class CkanClient(object):
             raise ValueError, msg
         return data
 
-    def _auth_headers(self):
-        return {
-            'Authorization': self.api_key,
-            'X-CKAN-API-Key': self.api_key
-            }
-
     def open_url(self, url, *args, **kwargs):
         result = self._open_url(url, *args, **kwargs)
         if self.last_status not in (200, 201):
@@ -242,23 +239,20 @@ class CkanClient(object):
     def package_register_get(self):
         self.reset()
         url = self.get_location('Package Register')
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def package_register_post(self, package_dict):
         self.reset()
         url = self.get_location('Package Register')
         data = self._dumpstr(package_dict)
-        headers = self._auth_headers()
-        self.open_url(url, data, headers)
+        self.open_url(url, data)
         return self.last_message
 
     def package_entity_get(self, package_name):
         self.reset()
         url = self.get_location('Package Entity', package_name)
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def package_entity_put(self, package_dict, package_name=None):
@@ -269,15 +263,13 @@ class CkanClient(object):
             package_name = package_dict['name']
         url = self.get_location('Package Entity', package_name)
         data = self._dumpstr(package_dict)
-        headers = self._auth_headers()
-        self.open_url(url, data, headers, method='PUT')
+        self.open_url(url, data, method='PUT')
         return self.last_message
 
     def package_entity_delete(self, package_name):
         self.reset()
         url = self.get_location('Package Register', package_name)
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers, method='DELETE')
+        self.open_url(url, method='DELETE')
         return self.last_message
 
     def package_relationship_register_get(self, package_name,
@@ -288,8 +280,7 @@ class CkanClient(object):
            entity_id=package_name,
            subregister=relationship_type,
            entity2_id=relationship_with_package_name)
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def package_relationship_entity_post(self, subject_package_name,
@@ -300,8 +291,7 @@ class CkanClient(object):
             subregister=relationship_type,
             entity2_id=object_package_name)
         data = self._dumpstr({'comment':comment})
-        headers = self._auth_headers()
-        self.open_url(url, data, headers, method='POST')
+        self.open_url(url, data, method='POST')
         return self.last_message
 
     def package_relationship_entity_put(self, subject_package_name,
@@ -312,8 +302,7 @@ class CkanClient(object):
             subregister=relationship_type,
             entity2_id=object_package_name)
         data = self._dumpstr({'comment':comment})
-        headers = self._auth_headers()
-        self.open_url(url, data, headers, method='PUT')
+        self.open_url(url, data, method='PUT')
         return self.last_message
 
     def package_relationship_entity_delete(self, subject_package_name,
@@ -323,44 +312,38 @@ class CkanClient(object):
             entity_id=subject_package_name,
             subregister=relationship_type,
             entity2_id=object_package_name)
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers, method='DELETE')
+        self.open_url(url, method='DELETE')
         return self.last_message
 
     def tag_register_get(self):
         self.reset()
         url = self.get_location('Tag Register')
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def tag_entity_get(self, tag_name):
         self.reset()
         url = self.get_location('Tag Entity', tag_name)
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def group_register_post(self, group_dict):
         self.reset()
         url = self.get_location('Group Register')
         data = self._dumpstr(group_dict)
-        headers = self._auth_headers()
-        self.open_url(url, data, headers)
+        self.open_url(url, data)
         return self.last_message
 
     def group_register_get(self):
         self.reset()
         url = self.get_location('Group Register')
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def group_entity_get(self, group_name):
         self.reset()
         url = self.get_location('Group Entity', group_name)
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def group_entity_put(self, group_dict, group_name=None):
@@ -371,8 +354,7 @@ class CkanClient(object):
             group_name = group_dict['name']
         url = self.get_location('Group Entity', group_name)
         data = self._dumpstr(group_dict)
-        headers = self._auth_headers()
-        self.open_url(url, data, headers, method='PUT')
+        self.open_url(url, data, method='PUT')
         return self.last_message
 
     #
@@ -387,8 +369,7 @@ class CkanClient(object):
         if not search_options.get('limit'):
             search_options['limit'] = PAGE_SIZE
         data = self._dumpstr(search_options)
-        headers = self._auth_headers()
-        self.open_url(url, data, headers)
+        self.open_url(url, data)
         result_dict = self.last_message
         if not search_options.get('offset'):
             result_dict['results'] = self._result_generator(result_dict['count'], result_dict['results'], self.package_search, q, search_options)
@@ -420,31 +401,27 @@ class CkanClient(object):
     def package_create_form_get(self):
         self.reset()
         url = self.get_location('Package Create Form')
-        headers = self._auth_headers()        
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def package_create_form_post(self, form_submission):
         self.reset()
         url = self.get_location('Package Create Form')
         data = self._dumpstr(form_submission)
-        headers = self._auth_headers()
-        self.open_url(url, data, headers)
+        self.open_url(url, data)
         return self.last_message
 
     def package_edit_form_get(self, package_ref):
         self.reset()
         url = self.get_location('Package Edit Form', package_ref)
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def package_edit_form_post(self, package_ref, form_submission):
         self.reset()
         url = self.get_location('Package Edit Form', package_ref)
         data = self._dumpstr(form_submission)
-        headers = self._auth_headers()
-        self.open_url(url, data, headers)
+        self.open_url(url, data)
         return self.last_message
 
     #
@@ -470,22 +447,19 @@ class CkanClient(object):
 
         '''
         url = self._storage_metadata_url(label)
-        headers = self._auth_headers()
-        self.open_url(url, headers=headers)
+        self.open_url(url)
         return self.last_message
 
     def storage_metadata_set(self, label, metadata):
         url = self._storage_metadata_url(label)
         payload = self._dumpstr(metadata)
-        headers = self._auth_headers()
-        self.open_url(url, payload, headers=headers, method="PUT")
+        self.open_url(url, payload, method="PUT")
         return self.last_message
 
     def storage_metadata_update(self, label, metadata):
         url = self._storage_metadata_url(label)
         payload = self._dumpstr(metadata)
-        headers = self._auth_headers()
-        self.open_url(url, payload, headers=headers, method="POST")
+        self.open_url(url, payload, method="POST")
         return self.last_message
 
     def _storage_auth_url(self, label):
@@ -499,8 +473,7 @@ class CkanClient(object):
     def storage_auth_get(self, label, headers):
         url = self._storage_auth_url(label)
         payload = self._dumpstr(headers)
-        headers = self._auth_headers()
-        self.open_url(url, payload, headers=headers, method="POST")
+        self.open_url(url, payload, method="POST")
         return self.last_message
 
     #
