@@ -124,12 +124,17 @@ class CkanClient(object):
         self.last_result = None # Action API only
         self.last_ckan_error = None # Action API only
 
-    def _open_url(self, location, data=None, headers={}, method=None):
+    def _open_url(self, location, data=None, headers=None, method=None):
+        if headers is None:
+            headers = {}
+        # automatically add auth headers into every request
+        _headers = self._auth_headers()
+        _headers.update(headers)
         self.last_location = location
         try:
             if data != None:
                 data = urlencode({data: 1})
-            req = ApiRequest(location, data, headers, method=method)
+            req = ApiRequest(location, data, _headers, method=method)
             self.url_response = urlopen(req)
             if data and self.url_response.geturl() != location:
                 redirection = '%s -> %s' % (location, self.url_response.geturl())
