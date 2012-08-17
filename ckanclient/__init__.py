@@ -93,9 +93,7 @@ class CkanClient(object):
         'Tag Entity': '/rest/tag',
         'Group Register': '/rest/group',
         'Group Entity': '/rest/group',
-        'Package Search': '/search/package',
-        'Package Create Form': '/form/package/create',
-        'Package Edit Form': '/form/package/edit',
+        'Package Search': '/search/package'
     }
 
     def __init__(self, base_location=None, api_key=None, is_verbose=False,
@@ -394,36 +392,6 @@ class CkanClient(object):
             result_dict = func(q, search_options)
             results = result_dict['results']
             
-    #
-    # Form API
-    #
-
-    def package_create_form_get(self):
-        self.reset()
-        url = self.get_location('Package Create Form')
-        self.open_url(url)
-        return self.last_message
-
-    def package_create_form_post(self, form_submission):
-        self.reset()
-        url = self.get_location('Package Create Form')
-        data = self._dumpstr(form_submission)
-        self.open_url(url, data)
-        return self.last_message
-
-    def package_edit_form_get(self, package_ref):
-        self.reset()
-        url = self.get_location('Package Edit Form', package_ref)
-        self.open_url(url)
-        return self.last_message
-
-    def package_edit_form_post(self, package_ref, form_submission):
-        self.reset()
-        url = self.get_location('Package Edit Form', package_ref)
-        data = self._dumpstr(form_submission)
-        self.open_url(url, data)
-        return self.last_message
-
     #
     # Storage API
     #
