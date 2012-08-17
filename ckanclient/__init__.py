@@ -86,8 +86,6 @@ class ApiClient(object):
         self.last_ckan_error = None # Action API only
 
     def open_url(self, location, data=None, headers={}, method=None):
-        if self.is_verbose:
-            self._print("ckanclient: Opening %s" % location)
         self.last_location = location
         try:
             if data != None:
@@ -98,21 +96,10 @@ class ApiClient(object):
                 redirection = '%s -> %s' % (location, self.url_response.geturl())
                 raise URLError("Got redirected to another URL, which does not work with POSTS. Redirection: %s" % redirection)
         except HTTPError, inst:
-            self._print("ckanclient: Received HTTP error code from CKAN resource.")
-            self._print("ckanclient: location: %s" % location)
-            self._print("ckanclient: response code: %s" % inst.fp.code)
-            self._print("ckanclient: request headers: %s" % headers)
-            self._print("ckanclient: request data: %s" % data)
-            self._print("ckanclient: error: %s" % inst)
             self.last_http_error = inst
             self.last_status = inst.code
             self.last_message = inst.read()
         except URLError, inst:
-            self._print("ckanclient: Unable to progress with URL.")
-            self._print("ckanclient: location: %s" % location)
-            self._print("ckanclient: request headers: %s" % headers)
-            self._print("ckanclient: request data: %s" % data)
-            self._print("ckanclient: error: %s" % inst)
             self.last_url_error = inst
             if isinstance(inst.reason, tuple):
                 self.last_status,self.last_message = inst.reason
@@ -120,15 +107,10 @@ class ApiClient(object):
                 self.last_message = inst.reason
                 self.last_status = inst.errno
         else:
-            self._print("ckanclient: OK opening CKAN resource: %s" % location)
             self.last_status = self.url_response.code
-            self._print('ckanclient: last status %s' % self.last_status)
             self.last_body = self.url_response.read()
-            self._print('ckanclient: last body %s' % self.last_body)
             self.last_headers = self.url_response.headers
-            self._print('ckanclient: last headers %s' % self.last_headers)
             content_type = self.last_headers['Content-Type']
-            self._print('ckanclient: content type: %s' % content_type)
             is_json_response = False
             if 'json' in content_type:
                 is_json_response = True
@@ -136,7 +118,6 @@ class ApiClient(object):
                 self.last_message = self._loadstr(self.last_body)
             else:
                 self.last_message = self.last_body
-            self._print('ckanclient: last message %s' % self.last_message)
     
     def get_location(self, resource_name, entity_id=None, subregister=None, entity2_id=None):
         base = self.base_location
@@ -165,13 +146,6 @@ class ApiClient(object):
             msg = "Couldn't decode data from JSON string: '%s': %s" % (string, exception)
             raise ValueError, msg
         return data
-
-    def _print(self, msg):
-        '''Print depending on self.is_verbose and log at the same time.'''
-        return
-        logger.debug(msg)
-        if self.is_verbose:
-            print(msg)
 
 
 class CkanClient(ApiClient):
