@@ -71,7 +71,46 @@ class ApiRequest(Request):
             return self._method
 
 
-class ApiClient(object):
+
+class CkanClient(object):
+    '''Client API implementation for CKAN.
+
+    :param base_location: default *http://thedatahub.org/api*
+    :param api_key: default *None*
+    :param is_verbose: default *False*
+    :param http_user: default *None*
+    :param http_pass: default *None*
+
+    '''
+    base_location = 'http://thedatahub.org/api'
+    resource_paths = {
+        'Base': '',
+        'Changeset Register': '/rest/changeset',
+        'Changeset Entity': '/rest/changeset',
+        'Package Register': '/rest/package',
+        'Package Entity': '/rest/package',
+        'Tag Register': '/rest/tag',
+        'Tag Entity': '/rest/tag',
+        'Group Register': '/rest/group',
+        'Group Entity': '/rest/group',
+        'Package Search': '/search/package',
+        'Package Create Form': '/form/package/create',
+        'Package Edit Form': '/form/package/edit',
+    }
+
+    def __init__(self, base_location=None, api_key=None, is_verbose=False,
+                 http_user=None, http_pass=None):
+        if base_location is not None:
+            self.base_location = base_location
+        self.api_key = api_key
+        self.is_verbose = is_verbose
+        if http_user and http_pass:
+            password_mgr = HTTPPasswordMgrWithDefaultRealm()
+            password_mgr.add_password(None, base_location,
+                                      http_user, http_pass)
+            handler = HTTPBasicAuthHandler(password_mgr)
+            opener = build_opener(handler)
+            install_opener(opener)
 
     def reset(self):
         self.last_location = None
@@ -85,7 +124,7 @@ class ApiClient(object):
         self.last_result = None # Action API only
         self.last_ckan_error = None # Action API only
 
-    def open_url(self, location, data=None, headers={}, method=None):
+    def _open_url(self, location, data=None, headers={}, method=None):
         self.last_location = location
         try:
             if data != None:
@@ -130,9 +169,6 @@ class ApiClient(object):
                     path += '/' + entity2_id            
         return base + path
 
-    def get_action_location(self, action_name):
-        return '%s/action/%s' % (self.base_location, action_name)
-
     def _dumpstr(self, data):
         return json.dumps(data)
     
@@ -147,47 +183,6 @@ class ApiClient(object):
             raise ValueError, msg
         return data
 
-
-class CkanClient(ApiClient):
-    '''Client API implementation for CKAN.
-
-    :param base_location: default *http://thedatahub.org/api*
-    :param api_key: default *None*
-    :param is_verbose: default *False*
-    :param http_user: default *None*
-    :param http_pass: default *None*
-
-    '''
-    base_location = 'http://thedatahub.org/api'
-    resource_paths = {
-        'Base': '',
-        'Changeset Register': '/rest/changeset',
-        'Changeset Entity': '/rest/changeset',
-        'Package Register': '/rest/package',
-        'Package Entity': '/rest/package',
-        'Tag Register': '/rest/tag',
-        'Tag Entity': '/rest/tag',
-        'Group Register': '/rest/group',
-        'Group Entity': '/rest/group',
-        'Package Search': '/search/package',
-        'Package Create Form': '/form/package/create',
-        'Package Edit Form': '/form/package/edit',
-    }
-
-    def __init__(self, base_location=None, api_key=None, is_verbose=False,
-                 http_user=None, http_pass=None):
-        if base_location is not None:
-            self.base_location = base_location
-        self.api_key = api_key
-        self.is_verbose = is_verbose
-        if http_user and http_pass:
-            password_mgr = HTTPPasswordMgrWithDefaultRealm()
-            password_mgr.add_password(None, base_location,
-                                      http_user, http_pass)
-            handler = HTTPBasicAuthHandler(password_mgr)
-            opener = build_opener(handler)
-            install_opener(opener)
-
     def _auth_headers(self):
         return {
             'Authorization': self.api_key,
@@ -195,7 +190,7 @@ class CkanClient(ApiClient):
             }
 
     def open_url(self, url, *args, **kwargs):
-        result = super(CkanClient, self).open_url(url, *args, **kwargs)
+        result = self._open_url(url, *args, **kwargs)
         if self.last_status not in (200, 201):
             if self.last_status == 404:
                 raise CkanApiNotFoundError(self.last_status)
@@ -209,7 +204,7 @@ class CkanClient(ApiClient):
             
     def open_action_url(self, url, data_dict):
         data_json = self._dumpstr(data_dict)
-        result = super(CkanClient, self).open_url(url, data=data_json)
+        result = self._open_url(url, data=data_json)
         if self.last_status not in (200, 201):
             if self.last_status == 404:
                 raise CkanApiNotFoundError(self.last_status)
@@ -510,7 +505,7 @@ class CkanClient(ApiClient):
     # for any action
     def action(self, action_name, **kwargs):
         self.reset()
-        url = self.get_action_location(action_name)
+        url = '%s/action/%s' % (self.base_location, action_name)
         self.open_action_url(url, kwargs)
         return self.last_result
 
