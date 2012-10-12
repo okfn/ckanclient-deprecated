@@ -486,7 +486,11 @@ class CkanClient(object):
         '''
         content_type, body = self._encode_multipart_formdata(fields, files)
 
-        h = httplib.HTTP(urlparse.urlparse(self.base_location).netloc)
+        if self.base_location.startswith('https'):
+            h = httplib.HTTPS(urlparse.urlparse(self.base_location).netloc)
+        else:
+            h = httplib.HTTP(urlparse.urlparse(self.base_location).netloc)
+
         h.putrequest('POST', selector)
         h.putheader('content-type', content_type)
         h.putheader('content-length', str(len(body)))
