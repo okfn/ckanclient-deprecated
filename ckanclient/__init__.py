@@ -377,7 +377,7 @@ class CkanClient(object):
         '''Returns a generator that will make the necessary calls to page
         through results.'''
         page = 0
-        num_pages = int(count / search_options['limit'] + 0.9999)
+        num_pages = (count + search_options['limit'] - 1) / search_options['limit']
         while True:
             for res in results:
                 yield res
