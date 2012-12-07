@@ -578,7 +578,8 @@ class CkanClient(object):
         file_key = os.path.join(ts, norm_name)
         auth_dict = self.storage_auth_get('/form/'+file_key, {})
         u = urlparse.urlparse(auth_dict['action'])
-        fields = [('key', file_key)]
+        fields = [(kv['name'], kv['value'])
+                  for kv in auth_dict['fields']]
         files  = [('file', os.path.basename(file_key), open(file_path).read())]
         errcode, errmsg, headers, body = self._post_multipart(u.path, fields,
                 files)
