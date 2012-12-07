@@ -627,6 +627,10 @@ class CkanClient(object):
         if file_path:
             m = hashlib.sha1(open(file_path).read())
             url, msg = self.upload_file(file_path)
+
+            if url == '':
+                raise CkanApiError(msg)
+
             urlp = urlparse.urlparse(url)
 
             server_path = urlp.path
