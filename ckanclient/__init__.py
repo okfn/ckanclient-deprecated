@@ -641,7 +641,7 @@ class CkanClient(object):
 
             r = dict(name=norm_name,
                     mimetype=self._get_content_type(file_path),
-                    hash=m.hexdigest(), size=st.st_size, url=server_path)
+                    hash=m.hexdigest(), size=st.st_size, url=url)
         else:
             r = dict(url=url)
 
