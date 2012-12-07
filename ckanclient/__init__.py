@@ -570,10 +570,10 @@ class CkanClient(object):
 
         auth_dict = self.storage_auth_get('/form/'+file_key, {})
 
-        fields = [(kv['name'], kv['value'])
+        fields = [(kv['name'].encode('ascii'), kv['value'].encode('ascii'))
                   for kv in auth_dict['fields']]
-        files  = [('file', os.path.basename(file_key), open(file_path).read())]
-        errcode, body = self._post_multipart(auth_dict['action'], fields, files)
+        files  = [('file', os.path.basename(file_key), open(file_path, 'rb').read())]
+        errcode, body = self._post_multipart(auth_dict['action'].encode('ascii'), fields, files)
 
         if errcode == 200:
             file_metadata = self.storage_metadata_get(file_key)
