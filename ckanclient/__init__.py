@@ -584,7 +584,8 @@ class CkanClient(object):
                 files)
 
         if errcode == 200:
-            return 'http://%s/storage/f/%s' % (self.base_netloc, file_key), ''
+            file_metadata = self.storage_metadata_get(file_key)
+            return file_metadata['_location'], ''
         else:
             return '', errmsg
 
