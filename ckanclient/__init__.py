@@ -207,11 +207,11 @@ class CkanClient(object):
         result = self._open_url(url, data=data_json)
         if self.last_status not in (200, 201):
             if self.last_status == 404:
-                raise CkanApiNotFoundError(self.last_status)
+                raise CkanApiNotFoundError(self.last_message)
             elif self.last_status == 403:
-                raise CkanApiNotAuthorizedError(self.last_status)
+                raise CkanApiNotAuthorizedError(self.last_message)
             elif self.last_status == 409:
-                raise CkanApiConflictError(self.last_status)
+                raise CkanApiConflictError(self.last_message)
             else:
                 raise CkanApiError(self.last_message)
         self.last_help = self.last_message['help']
