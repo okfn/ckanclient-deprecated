@@ -494,6 +494,13 @@ class CkanClient(object):
         h.putrequest('POST', selector)
         h.putheader('content-type', content_type)
         h.putheader('content-length', str(len(body)))
+        
+        #this is a simple fix. Could most probably be done better.
+        #Authorization headers should be submitted only once. CKAN can use
+        #cookies?
+        h.putheader('Authorization', self.api_key)
+        h.putheader('X-CKAN-API-Key', self.api_key)
+        
         h.endheaders()
         h.send(body)
         errcode, errmsg, headers = h.getreply()
