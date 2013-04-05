@@ -100,6 +100,7 @@ class CkanClient(object):
                  http_user=None, http_pass=None):
         if base_location is not None:
             self.base_location = base_location
+        self.base_netloc = urlparse.urlparse(self.base_location).netloc
         self.api_key = api_key
         self.is_verbose = is_verbose
         if http_user and http_pass:
@@ -487,9 +488,9 @@ class CkanClient(object):
         content_type, body = self._encode_multipart_formdata(fields, files)
 
         if self.base_location.startswith('https'):
-            h = httplib.HTTPS(urlparse.urlparse(self.base_location).netloc)
+            h = httplib.HTTPS(self.base_netloc)
         else:
-            h = httplib.HTTP(urlparse.urlparse(self.base_location).netloc)
+            h = httplib.HTTP(self.base_netloc)
 
         h.putrequest('POST', selector)
         h.putheader('content-type', content_type)
@@ -575,9 +576,7 @@ class CkanClient(object):
         ts = datetime.isoformat(datetime.now()).replace(':','').split('.')[0]
         norm_name  = os.path.basename(file_path).replace(' ', '-')
         file_key = os.path.join(ts, norm_name)
-
         auth_dict = self.storage_auth_get('/form/'+file_key, {})
-
         u = urlparse.urlparse(auth_dict['action'])
         fields = [('key', file_key)]
         files  = [('file', os.path.basename(file_key), open(file_path).read())]
@@ -585,7 +584,7 @@ class CkanClient(object):
                 files)
 
         if errcode == 200:
-            return 'http://%s/storage/f/%s' % (u.netloc, file_key), ''
+            return 'http://%s/storage/f/%s' % (self.base_netloc, file_key), ''
         else:
             return '', errmsg
 
