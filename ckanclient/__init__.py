@@ -486,7 +486,10 @@ class CkanClient(object):
 
         '''
         content_type, body = self._encode_multipart_formdata(fields, files)
-
+        
+        #quick workaround
+        url = "http://" + self.base_netloc + url
+        
         #this is a simple fix. Could most probably be done better.
         #Authorization headers should be submitted only once. CKAN can use
         #cookies?
@@ -573,6 +576,8 @@ class CkanClient(object):
         fields = [(kv['name'].encode('ascii'), kv['value'].encode('ascii'))
                   for kv in auth_dict['fields']]
         files  = [('file', os.path.basename(file_key), open(file_path, 'rb').read())]
+        
+
         errcode, body = self._post_multipart(auth_dict['action'].encode('ascii'), fields, files)
 
         if errcode == 200:
