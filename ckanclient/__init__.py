@@ -100,7 +100,6 @@ class CkanClient(object):
                  http_user=None, http_pass=None):
         if base_location is not None:
             self.base_location = base_location
-        self.base_netloc = urlparse.urlparse(self.base_location).netloc
         self.api_key = api_key
         self.is_verbose = is_verbose
         if http_user and http_pass:
@@ -486,18 +485,19 @@ class CkanClient(object):
 
         '''
         content_type, body = self._encode_multipart_formdata(fields, files)
-        
-        #quick workaround
-        url = "http://" + self.base_netloc + url
-        
-        #this is a simple fix. Could most probably be done better.
-        #Authorization headers should be submitted only once. CKAN can use
-        #cookies?
-        request = Request(url, data=body, headers={
-            'Content-Type': content_type,
-            'Authorization': self.api_key,
-            'X-CKAN-API-Key': self.api_key,
-        })
+        headers = {'Content-Type': content_type}
+
+        # If we got a relative url from api, and we need to build a absolute
+        url = urlparse.urljoin(self.base_location, url)
+
+        # If we are posting to ckan, we need to add ckan auth headers.
+        if url.startswith(urlparse.urljoin(self.base_location, '/')):
+            headers.update({
+                'Authorization': self.api_key,
+                'X-CKAN-API-Key': self.api_key,
+            })
+
+        request = Request(url, data=body, headers=headers)
         response = urlopen(request)
         return response.getcode(), response.read()
 
