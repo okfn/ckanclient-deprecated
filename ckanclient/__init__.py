@@ -665,3 +665,49 @@ class CkanClient(object):
                 api_key = cfgparser.get(section, 'api_key', '')
                 return api_key
 
+## ======================================
+## Command line interface
+
+import sys
+import inspect
+import optparse
+import pprint
+def _object_methods(obj):
+    methods = inspect.getmembers(obj, inspect.ismethod)
+    methods = filter(lambda (name,y): not name.startswith('_'), methods)
+    methods = dict(methods)
+    return methods
+
+def main():
+    _methods = _object_methods(CkanClient)
+
+    usage = '''%prog {action} [additional-arguments]
+
+Actions:
+    '''
+    usage += '\n    '.join(
+        [ '%s: %s' % (name, m.__doc__ if m.__doc__ else '') for (name,m)
+        in sorted(_methods.items()) ])
+    parser = optparse.OptionParser(usage)
+    parser.add_option('--ckan', dest='ckan_instance',
+            help='URL of CKAN instance')
+    options, args = parser.parse_args()
+    if options.ckan_instance:
+        client = CkanClient(options.ckan_instance)
+    else:
+        client  = CkanClient()
+    del options.__dict__['ckan_instance']
+
+    if not len(args) >= 1 or not args[0] in _methods:
+        parser.print_help()
+        sys.exit(1)
+
+    method = args[0]
+    optdict = options.__dict__
+    output = getattr(client, method)(*args[1:], **optdict)
+    pprint.pprint(output)
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    cli()
+

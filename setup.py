@@ -38,4 +38,8 @@ setup(
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules'],
     test_suite = 'nose.collector',
+    entry_points='''
+    [console_scripts]
+    ckanclient=ckanclient:main
+    '''
 )
