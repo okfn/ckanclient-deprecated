@@ -26,12 +26,11 @@ Usage
 API Key
 ```````
 
-Many ckanclient operations  require your CKAN API key. You can provide your API
-key in the URL called, e.g.::
+You can either pass your API key explicitly when creating the CkanClient instance::
 
-    http://{your-api-key}@thedatahub.org/api/data/fffc6388-01bc-44c4-ba0d-b860d93e6c7c'
+    client = CkanClient(api_key='my-api-key')
 
-or you can put your API key in your ``~/.ckanclientrc`` file::
+Or you can put your API key in your ``~/.ckanclientrc`` file::
 
     [index:{hostname}]
     api_key = {your-api-key}

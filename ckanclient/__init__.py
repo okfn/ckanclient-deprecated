@@ -9,7 +9,7 @@ __license__ = 'MIT'
 
 import os
 import re
-
+import ConfigParser
 import mimetypes, urlparse, hashlib
 from datetime import datetime
 
@@ -100,7 +100,10 @@ class CkanClient(object):
                  http_user=None, http_pass=None):
         if base_location is not None:
             self.base_location = base_location
-        self.api_key = api_key
+        if api_key:
+            self.api_key = api_key
+        else:
+            self.api_key = self._get_api_key_from_config()
         self.is_verbose = is_verbose
         if http_user and http_pass:
             password_mgr = HTTPPasswordMgrWithDefaultRealm()
@@ -649,3 +652,16 @@ class CkanClient(object):
         p = self.package_entity_get(package_name)
         p['resources'].append(r)
         return self.package_entity_put(p)
+
+    def _get_api_key_from_config(self):
+        parsed = urlparse.urlparse(self.base_location)
+        netloc = parsed.netloc
+        config_path = os.path.join(os.path.expanduser('~'), '.ckanclientrc')
+        if os.path.exists(config_path):
+            cfgparser = ConfigParser.SafeConfigParser()
+            cfgparser.readfp(open(config_path))
+            section = 'index:%s' % netloc
+            if cfgparser.has_section(section):
+                api_key = cfgparser.get(section, 'api_key', '')
+                return api_key
+
