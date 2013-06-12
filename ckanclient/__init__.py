@@ -75,14 +75,14 @@ class ApiRequest(Request):
 class CkanClient(object):
     '''Client API implementation for CKAN.
 
-    :param base_location: default *http://thedatahub.org/api*
+    :param base_location: default *http://datahub.io/api*
     :param api_key: default *None*
     :param is_verbose: default *False*
     :param http_user: default *None*
     :param http_pass: default *None*
 
     '''
-    base_location = 'http://thedatahub.org/api'
+    base_location = 'http://datahub.io/api'
     resource_paths = {
         'Base': '',
         'Changeset Register': '/rest/changeset',

@@ -42,7 +42,7 @@ Or you can put your API key in your ``~/.ckanclientrc`` file::
 
 For example::
 
-    [index:thedatahub.org]
+    [index:datahub.io]
     api_key = adfakjfafdkjda
 
     [index:localhost]
@@ -63,9 +63,9 @@ The simplest way to make CKAN API requests is::
     import ckanclient
 
     # Instantiate the CKAN client.
-    ckan = ckanclient.CkanClient(base_location='http://thedatahub.org/api',
+    ckan = ckanclient.CkanClient(base_location='http://datahub.io/api',
                                  api_key='adbc-1c0d')
-    # (use your own api_key from http://thedatahub.org/user/me )
+    # (use your own api_key from http://datahub.io/user/me )
 
     # Get the package list.
     package_list = ckan.package_register_get()
@@ -128,7 +128,7 @@ You can use ckanclient to upload files to CKAN's FileStore via the Storage API,
 example::
 
     import ckanclient
-    ckan = ckanclient.CkanClient(base_location='http://thedatahub.org/api',
+    ckan = ckanclient.CkanClient(base_location='http://datahub.io/api',
         api_key='aa9368b2-6f18-4c96-b190-4f3355613d88')
     ckan.upload_file('my_data.csv')
     ckan.add_package_resource('my_dataset', 'my_data_file.csv',
