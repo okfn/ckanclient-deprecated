@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v0.11 2013-06-12
+----------------
+
+  * Default URL changed from thedatahub.org to datahub.io
+
 v0.10
 -----
 
