@@ -477,16 +477,23 @@ class CkanClient(object):
     # Private Helpers
     #
     def _post_multipart(self, url, fields, files):
+        '''Execution the POST of the multipart message.
 
+        :param url: url where the post should be done
+        :param fields: key/value list to be added a HTTPPOST keys.
+        only the first one for the file path will be added
+        :param files: list of files (with corresopnding)
+        filename and key for the POST.
+        Only the first file will be used
+        In the ckanclient context, only one file is provided
+
+        '''
         url = urlparse.urljoin(self.base_location, url)
 
         #original code was made to support multiple file
         #but at this point we can only have one file...
         (key, value) = fields[0]
         (fkey, ffilename, fvalue) = files[0]
-
-        print "field : %s - %s " % (key, value)
-        print "fichier : %s - %s " % (fkey, ffilename) 
 
         storage = StringIO()
 
@@ -516,51 +523,6 @@ class CkanClient(object):
         return http_code, content
 
 
-    def _encode_multipart_formdata(self, fields, files):
-        '''Encode fields and files to be posted as multipart/form-data.
-
-        Taken from
-        http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
-
-        :param fields: a sequence of (name, value) tuples for the regular
-            form fields to be encoded
-        :param files: a sequence of (name, filename, value) tuples for the data
-            to be uploaded as files
-
-        :returns: (content_type, body) ready for httplib.HTTP instance
-
-        '''
-
-
-
-
-
-        BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
-        CRLF = '\r\n'
-        L = []
-        for (key, value) in fields:
-            print key 
-            print value
-            L.append('--' + BOUNDARY)
-            L.append('Content-Disposition: form-data; name="%s"' % key)
-            L.append('')
-            L.append(value)
-        for (key, filename, value) in files:
-            print key
-            print filename
-            print value
-            L.append('--' + BOUNDARY)
-            L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
-            L.append('Content-Type: %s' % self._get_content_type(filename))
-            L.append('')
-            L.append(value)
-        L.append('--' + BOUNDARY + '--')
-        L.append('')
-
-        body = CRLF.join(L)
-
-        content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
-        return content_type, body
 
     def _get_content_type(self, filename):
         return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
@@ -610,7 +572,17 @@ class CkanClient(object):
         if errcode == 200:
             file_metadata = self.storage_metadata_get(file_key)
             return file_metadata['_location'], ''
+        elif self.last_status == 404:
+            raise CkanApiNotFoundError(body)
+            return '', body
+        elif self.last_status == 403:
+            raise CkanApiNotAuthorizedError(body)
+            return '', body
+        elif self.last_status == 409:
+            raise CkanApiConflictError(body)
+            return '', body
         else:
+            raise CkanApiError(body)            
             return '', body
 
     def add_package_resource (self, package_name, file_path_or_url, **kwargs):
