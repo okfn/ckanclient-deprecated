@@ -9,9 +9,12 @@ __license__ = 'MIT'
 
 import os
 import re
+import io
+import pycurl
 import ConfigParser
 import mimetypes, urlparse, hashlib
 from datetime import datetime
+from StringIO import StringIO    
 
 try:
     str = unicode
@@ -474,69 +477,52 @@ class CkanClient(object):
     # Private Helpers
     #
     def _post_multipart(self, url, fields, files):
-        '''Post fields and files to an http host as multipart/form-data.
+        '''Execution the POST of the multipart message.
 
-        Taken from
-        http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
-
-        :param fields: a sequence of (name, value) tuples for regular form
-            fields
-        :param files: a sequence of (name, filename, value) tuples for data to
-            be uploaded as files
-
-        :returns: the server's response page
+        :param url: url where the post should be done
+        :param fields: key/value list to be added a HTTPPOST keys.
+        only the first one for the file path will be added
+        :param files: list of files (with corresopnding)
+        filename and key for the POST.
+        Only the first file will be used
+        In the ckanclient context, only one file is provided
 
         '''
-        content_type, body = self._encode_multipart_formdata(fields, files)
-        headers = {'Content-Type': content_type}
-
-        # If we got a relative url from api, and we need to build a absolute
         url = urlparse.urljoin(self.base_location, url)
 
-        # If we are posting to ckan, we need to add ckan auth headers.
+        #original code was made to support multiple file
+        #but at this point we can only have one file...
+        (key, value) = fields[0]
+        (fkey, ffilename, fvalue) = files[0]
+
+        storage = StringIO()
+
+        c = pycurl.Curl()
+        c.setopt(c.POST, 1)
+        c.setopt(c.URL, url)
+        c.setopt(c.WRITEFUNCTION, storage.write)
         if url.startswith(urlparse.urljoin(self.base_location, '/')):
-            headers.update({
-                'Authorization': self.api_key,
-                'X-CKAN-API-Key': self.api_key,
-            })
+            c.setopt(c.HTTPHEADER, [
+               'Authorization: %s' % self.api_key,
+               'X-CKAN-API-Key: %s' % self.api_key,
+               'Accept-Encoding: identity'
+            ])
 
-        request = Request(url, data=body, headers=headers)
-        response = urlopen(request)
-        return response.getcode(), response.read()
+        c.setopt(c.HTTPPOST, [
+            (key, value),
+            (fkey, (c.FORM_FILE, ffilename.encode('ascii', 'ignore'), 
+                    c.FORM_CONTENTTYPE, self._get_content_type(ffilename)))
+             ])
+        c.perform()
 
-    def _encode_multipart_formdata(self, fields, files):
-        '''Encode fields and files to be posted as multipart/form-data.
+        content = storage.getvalue()
+        http_code = c.getinfo(pycurl.HTTP_CODE)
 
-        Taken from
-        http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
+        c.close()
 
-        :param fields: a sequence of (name, value) tuples for the regular
-            form fields to be encoded
-        :param files: a sequence of (name, filename, value) tuples for the data
-            to be uploaded as files
+        return http_code, content
 
-        :returns: (content_type, body) ready for httplib.HTTP instance
 
-        '''
-        BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
-        CRLF = '\r\n'
-        L = []
-        for (key, value) in fields:
-            L.append('--' + BOUNDARY)
-            L.append('Content-Disposition: form-data; name="%s"' % key)
-            L.append('')
-            L.append(value)
-        for (key, filename, value) in files:
-            L.append('--' + BOUNDARY)
-            L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
-            L.append('Content-Type: %s' % self._get_content_type(filename))
-            L.append('')
-            L.append(value)
-        L.append('--' + BOUNDARY + '--')
-        L.append('')
-        body = CRLF.join(L)
-        content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
-        return content_type, body
 
     def _get_content_type(self, filename):
         return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
@@ -571,6 +557,7 @@ class CkanClient(object):
         # see ckan/public/application.js:makeUploadKey for why the file_key
         # is derived this way.
         ts = datetime.isoformat(datetime.now()).replace(':','').split('.')[0]
+
         norm_name  = os.path.basename(file_path).replace(' ', '-')
         file_key = os.path.join(ts, norm_name)
 
@@ -578,15 +565,24 @@ class CkanClient(object):
 
         fields = [(kv['name'].encode('ascii'), kv['value'].encode('ascii'))
                   for kv in auth_dict['fields']]
-        files  = [('file', os.path.basename(file_key), open(file_path, 'rb').read())]
-        
-
+        files  = [('file', file_path, open(file_path, 'rb').read())]
+ 
         errcode, body = self._post_multipart(auth_dict['action'].encode('ascii'), fields, files)
 
         if errcode == 200:
             file_metadata = self.storage_metadata_get(file_key)
             return file_metadata['_location'], ''
+        elif self.last_status == 404:
+            raise CkanApiNotFoundError(body)
+            return '', body
+        elif self.last_status == 403:
+            raise CkanApiNotAuthorizedError(body)
+            return '', body
+        elif self.last_status == 409:
+            raise CkanApiConflictError(body)
+            return '', body
         else:
+            raise CkanApiError(body)            
             return '', body
 
     def add_package_resource (self, package_name, file_path_or_url, **kwargs):
