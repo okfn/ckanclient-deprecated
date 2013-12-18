@@ -82,6 +82,7 @@ class CkanClient(object):
     :param is_verbose: default *False*
     :param http_user: default *None*
     :param http_pass: default *None*
+    :param user_agent: Identify your tool. Default *ckanclient*
 
     '''
     base_location = 'http://datahub.io/api'
@@ -99,7 +100,7 @@ class CkanClient(object):
     }
 
     def __init__(self, base_location=None, api_key=None, is_verbose=False,
-                 http_user=None, http_pass=None):
+                 http_user=None, http_pass=None, user_agent=None):
         if base_location is not None:
             self.base_location = base_location
         if api_key:
@@ -114,6 +115,7 @@ class CkanClient(object):
             handler = HTTPBasicAuthHandler(password_mgr)
             opener = build_opener(handler)
             install_opener(opener)
+        self.user_agent = user_agent or 'ckanclient'
 
     def reset(self):
         self.last_location = None
@@ -133,7 +135,8 @@ class CkanClient(object):
         # automatically add auth headers into every request
         _headers = {
             'Authorization': self.api_key,
-            'X-CKAN-API-Key': self.api_key
+            'X-CKAN-API-Key': self.api_key,
+            'User-Agent': self.user_agent,
         }
         _headers.update(headers)
         self.last_location = location
