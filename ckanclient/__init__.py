@@ -10,7 +10,6 @@ __license__ = 'MIT'
 import os
 import re
 import io
-import pycurl
 import ConfigParser
 import mimetypes, urlparse, hashlib
 from datetime import datetime
@@ -488,6 +487,9 @@ class CkanClient(object):
         In the ckanclient context, only one file is provided
 
         '''
+        # import pycurl here because otherwise setup.py barfs on installing ckanclient
+        import pycurl
+
         url = urlparse.urljoin(self.base_location, url)
 
         #original code was made to support multiple file
@@ -510,7 +512,7 @@ class CkanClient(object):
 
         c.setopt(c.HTTPPOST, [
             (key, value),
-            (fkey, (c.FORM_FILE, ffilename.encode('ascii', 'ignore'), 
+            (fkey, (c.FORM_FILE, ffilename.encode('ascii', 'ignore'),
                     c.FORM_CONTENTTYPE, self._get_content_type(ffilename)))
              ])
         c.perform()
