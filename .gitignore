@@ -2,3 +2,4 @@
 ckanclient.egg-info/*
 dist/*
 .*.swp
+.DS_Store

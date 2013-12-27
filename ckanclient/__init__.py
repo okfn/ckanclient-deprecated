@@ -11,6 +11,7 @@ import os
 import re
 import io
 import pycurl
+import requests
 import ConfigParser
 import mimetypes, urlparse, hashlib
 from datetime import datetime
@@ -495,6 +496,18 @@ class CkanClient(object):
         (key, value) = fields[0]
         (fkey, ffilename, fvalue) = files[0]
 
+#MSSING CONTENT-TYPE#
+        files =  {fkey: (ffilename.split('/')[-1].encode('ascii', 'ignore'), open(ffilename, 'rb'))}
+        #payload = {'some': 'data'}
+        payload = {key: value.encode('ascii', 'ignore')}
+        #r = requests.post(url,  files=files)
+
+        headers = {'Authorization': self.api_key,
+                   'X-CKAN-API-Key': self.api_key,
+                   'Accept-Encoding': 'identity'}
+        r = requests.post(url, headers=headers, data=payload, files=files)
+
+        '''
         storage = StringIO()
 
         c = pycurl.Curl()
@@ -514,11 +527,12 @@ class CkanClient(object):
                     c.FORM_CONTENTTYPE, self._get_content_type(ffilename)))
              ])
         c.perform()
+        '''
+        content = r.text
+        http_code = r.status_code
 
-        content = storage.getvalue()
-        http_code = c.getinfo(pycurl.HTTP_CODE)
+        print "Response code %s" % (http_code)
 
-        c.close()
 
         return http_code, content
 
@@ -554,6 +568,7 @@ class CkanClient(object):
         :rtype: (string, string) 2-tuple
 
         '''
+
         # see ckan/public/application.js:makeUploadKey for why the file_key
         # is derived this way.
         ts = datetime.isoformat(datetime.now()).replace(':','').split('.')[0]
@@ -562,6 +577,8 @@ class CkanClient(object):
         file_key = os.path.join(ts, norm_name)
 
         auth_dict = self.storage_auth_get('/form/'+file_key, {})
+
+        #auth_dict = {u'action': u'/storage/upload_handle', u'fields': [{u'name': u'key', u'value': u'2013-12-27T112048/input.json'}]}
 
         fields = [(kv['name'].encode('ascii'), kv['value'].encode('ascii'))
                   for kv in auth_dict['fields']]
@@ -613,6 +630,7 @@ class CkanClient(object):
         :rtype: dataset dictionary
 
         '''
+
         file_path, url = '', ''
 
         try:
@@ -644,6 +662,7 @@ class CkanClient(object):
 
         r.update(kwargs)
         if not r.has_key('name'): r['name'] = url
+
 
         p = self.package_entity_get(package_name)
         p['resources'].append(r)
