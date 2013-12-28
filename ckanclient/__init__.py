@@ -10,8 +10,6 @@ __license__ = 'MIT'
 import os
 import re
 import io
-import pycurl
-import requests
 import ConfigParser
 import mimetypes, urlparse, hashlib
 from datetime import datetime
@@ -489,6 +487,9 @@ class CkanClient(object):
         In the ckanclient context, only one file is provided
 
         '''
+        import requests
+
+
         url = urlparse.urljoin(self.base_location, url)
 
         #original code was made to support multiple file
@@ -496,45 +497,20 @@ class CkanClient(object):
         (key, value) = fields[0]
         (fkey, ffilename, fvalue) = files[0]
 
-#MSSING CONTENT-TYPE#
-        files =  {fkey: (ffilename.split('/')[-1].encode('ascii', 'ignore'), open(ffilename, 'rb'))}
-        #payload = {'some': 'data'}
+        files =  {fkey: (ffilename.split('/')[-1].encode('ascii', 'ignore'), 
+                            open(ffilename, 'rb'), 
+                            self._get_content_type(ffilename))}
+
         payload = {key: value.encode('ascii', 'ignore')}
-        #r = requests.post(url,  files=files)
 
         headers = {'Authorization': self.api_key,
                    'X-CKAN-API-Key': self.api_key,
                    'Accept-Encoding': 'identity'}
+
+        #Post the file + metadata fields
         r = requests.post(url, headers=headers, data=payload, files=files)
 
-        '''
-        storage = StringIO()
-
-        c = pycurl.Curl()
-        c.setopt(c.POST, 1)
-        c.setopt(c.URL, url)
-        c.setopt(c.WRITEFUNCTION, storage.write)
-        if url.startswith(urlparse.urljoin(self.base_location, '/')):
-            c.setopt(c.HTTPHEADER, [
-               'Authorization: %s' % self.api_key,
-               'X-CKAN-API-Key: %s' % self.api_key,
-               'Accept-Encoding: identity'
-            ])
-
-        c.setopt(c.HTTPPOST, [
-            (key, value),
-            (fkey, (c.FORM_FILE, ffilename.encode('ascii', 'ignore'), 
-                    c.FORM_CONTENTTYPE, self._get_content_type(ffilename)))
-             ])
-        c.perform()
-        '''
-        content = r.text
-        http_code = r.status_code
-
-        print "Response code %s" % (http_code)
-
-
-        return http_code, content
+        return r.status_code, r.text
 
 
 
@@ -577,8 +553,6 @@ class CkanClient(object):
         file_key = os.path.join(ts, norm_name)
 
         auth_dict = self.storage_auth_get('/form/'+file_key, {})
-
-        #auth_dict = {u'action': u'/storage/upload_handle', u'fields': [{u'name': u'key', u'value': u'2013-12-27T112048/input.json'}]}
 
         fields = [(kv['name'].encode('ascii'), kv['value'].encode('ascii'))
                   for kv in auth_dict['fields']]
