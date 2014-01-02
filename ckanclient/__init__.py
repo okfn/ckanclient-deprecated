@@ -490,8 +490,11 @@ class CkanClient(object):
         In the ckanclient context, only one file is provided
 
         '''
-        # import pycurl here because otherwise setup.py barfs on installing ckanclient
-        import pycurl
+        # NB This method (for uploading files) requires requests>=2.0.1
+        # (This dependency has not been put in setup.py since most users
+        # don't need this functionality and it saves them the hassle of
+        # installing a dependency.)
+        import requests
 
         url = urlparse.urljoin(self.base_location, url)
 
@@ -500,32 +503,20 @@ class CkanClient(object):
         (key, value) = fields[0]
         (fkey, ffilename, fvalue) = files[0]
 
-        storage = StringIO()
+        files = {fkey: (ffilename.split('/')[-1].encode('ascii', 'ignore'),
+                        open(ffilename, 'rb'),
+                        self._get_content_type(ffilename))}
 
-        c = pycurl.Curl()
-        c.setopt(c.POST, 1)
-        c.setopt(c.URL, url)
-        c.setopt(c.WRITEFUNCTION, storage.write)
-        if url.startswith(urlparse.urljoin(self.base_location, '/')):
-            c.setopt(c.HTTPHEADER, [
-               'Authorization: %s' % self.api_key,
-               'X-CKAN-API-Key: %s' % self.api_key,
-               'Accept-Encoding: identity'
-            ])
+        payload = {key: value.encode('ascii', 'ignore')}
 
-        c.setopt(c.HTTPPOST, [
-            (key, value),
-            (fkey, (c.FORM_FILE, ffilename.encode('ascii', 'ignore'),
-                    c.FORM_CONTENTTYPE, self._get_content_type(ffilename)))
-             ])
-        c.perform()
+        headers = {'Authorization': self.api_key,
+                   'X-CKAN-API-Key': self.api_key,
+                   'Accept-Encoding': 'identity'}
 
-        content = storage.getvalue()
-        http_code = c.getinfo(pycurl.HTTP_CODE)
+        #Post the file + metadata fields
+        r = requests.post(url, headers=headers, data=payload, files=files)
 
-        c.close()
-
-        return http_code, content
+        return r.status_code, r.text
 
 
 
@@ -559,6 +550,7 @@ class CkanClient(object):
         :rtype: (string, string) 2-tuple
 
         '''
+
         # see ckan/public/application.js:makeUploadKey for why the file_key
         # is derived this way.
         ts = datetime.isoformat(datetime.now()).replace(':','').split('.')[0]
@@ -618,6 +610,7 @@ class CkanClient(object):
         :rtype: dataset dictionary
 
         '''
+
         file_path, url = '', ''
 
         try:
@@ -649,6 +642,7 @@ class CkanClient(object):
 
         r.update(kwargs)
         if not r.has_key('name'): r['name'] = url
+
 
         p = self.package_entity_get(package_name)
         p['resources'].append(r)
