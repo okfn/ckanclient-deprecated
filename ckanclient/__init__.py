@@ -346,6 +346,13 @@ class CkanClient(object):
         self.open_url(url)
         return self.last_message
 
+    def group_entity_delete(self, group_name):
+        self.reset()
+        url = self.get_location('Group Register', group_name)
+        self.open_url(url, method='DELETE')
+        return self.last_message
+
+
     def group_entity_get(self, group_name):
         self.reset()
         url = self.get_location('Group Entity', group_name)
