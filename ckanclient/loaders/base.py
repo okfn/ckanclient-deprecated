@@ -64,7 +64,7 @@ class CkanLoader(object):
         self.init_ckanclient()
 
     def add_options(self, parser):
-        """Adds options for CKAN serice location and REST API key."""
+        """Adds options for CKAN service location and REST API key."""
         parser.add_option(
             '--ckan-api-location',
             dest='ckan_api_location',
